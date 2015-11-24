@@ -1,0 +1,709 @@
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 1
+
+
+   1              		.cpu cortex-m0
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 1
+  10              		.eabi_attribute 34, 0
+  11              		.eabi_attribute 18, 4
+  12              		.code	16
+  13              		.file	"MyLib.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.ExtInter_Head,"ax",%progbits
+  18              		.align	2
+  19              		.global	ExtInter_Head
+  20              		.code	16
+  21              		.thumb_func
+  22              		.type	ExtInter_Head, %function
+  23              	ExtInter_Head:
+  24              	.LFB33:
+  25              		.file 1 ".\\MyLib.c"
+   1:.\MyLib.c     **** /* ========================================
+   2:.\MyLib.c     ****  *
+   3:.\MyLib.c     ****  * Copyright YOUR COMPANY, THE YEAR
+   4:.\MyLib.c     ****  * All Rights Reserved
+   5:.\MyLib.c     ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:.\MyLib.c     ****  *
+   7:.\MyLib.c     ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\MyLib.c     ****  * WHICH IS THE PROPERTY OF your company.
+   9:.\MyLib.c     ****  *
+  10:.\MyLib.c     ****  * ========================================
+  11:.\MyLib.c     **** */
+  12:.\MyLib.c     **** #include <MyLib.h>
+  13:.\MyLib.c     **** 
+  14:.\MyLib.c     **** CY_ISR(ExtInter_Head)
+  15:.\MyLib.c     **** {
+  26              		.loc 1 15 0
+  27              		.cfi_startproc
+  28 0000 10B5     		push	{r4, lr}
+  29              		.cfi_def_cfa_offset 8
+  30              		.cfi_offset 4, -8
+  31              		.cfi_offset 14, -4
+  16:.\MyLib.c     **** 	ExtInt.Temp = TEMP_IRQ_Read();
+  32              		.loc 1 16 0
+  33 0002 FFF7FEFF 		bl	TEMP_IRQ_Read
+  34              	.LVL0:
+  35 0006 074C     		ldr	r4, .L2
+  36 0008 2070     		strb	r0, [r4]
+  17:.\MyLib.c     ****     ExtInt.Crit_Temp = CRIT_TEMP_IRQ_Read();
+  37              		.loc 1 17 0
+  38 000a FFF7FEFF 		bl	CRIT_TEMP_IRQ_Read
+  39              	.LVL1:
+  40 000e 6070     		strb	r0, [r4, #1]
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 2
+
+
+  18:.\MyLib.c     ****     ExtInt.Button = Button_Read();
+  41              		.loc 1 18 0
+  42 0010 FFF7FEFF 		bl	Button_Read
+  43              	.LVL2:
+  44 0014 E070     		strb	r0, [r4, #3]
+  19:.\MyLib.c     ****     ExtInt.Opt = OPT_IRQ_Read();
+  45              		.loc 1 19 0
+  46 0016 FFF7FEFF 		bl	OPT_IRQ_Read
+  47              	.LVL3:
+  48 001a A070     		strb	r0, [r4, #2]
+  20:.\MyLib.c     ****     ExtInt.NRF = NRF_IRQ_Read();
+  49              		.loc 1 20 0
+  50 001c FFF7FEFF 		bl	NRF_IRQ_Read
+  51              	.LVL4:
+  52 0020 2071     		strb	r0, [r4, #4]
+  21:.\MyLib.c     **** }
+  53              		.loc 1 21 0
+  54              		@ sp needed
+  55 0022 10BD     		pop	{r4, pc}
+  56              	.L3:
+  57              		.align	2
+  58              	.L2:
+  59 0024 00000000 		.word	ExtInt
+  60              		.cfi_endproc
+  61              	.LFE33:
+  62              		.size	ExtInter_Head, .-ExtInter_Head
+  63              		.section	.text.InterruptAction,"ax",%progbits
+  64              		.align	2
+  65              		.global	InterruptAction
+  66              		.code	16
+  67              		.thumb_func
+  68              		.type	InterruptAction, %function
+  69              	InterruptAction:
+  70              	.LFB34:
+  22:.\MyLib.c     **** 
+  23:.\MyLib.c     **** void InterruptAction(void)
+  24:.\MyLib.c     **** {
+  71              		.loc 1 24 0
+  72              		.cfi_startproc
+  25:.\MyLib.c     **** 	
+  26:.\MyLib.c     **** }
+  73              		.loc 1 26 0
+  74              		@ sp needed
+  75 0000 7047     		bx	lr
+  76              		.cfi_endproc
+  77              	.LFE34:
+  78              		.size	InterruptAction, .-InterruptAction
+  79              		.comm	ExtInt,5,4
+  80 0002 C046     		.text
+  81              	.Letext0:
+  82              		.file 2 "./MyLib.h"
+  83              		.file 3 "Generated_Source\\PSoC4/cytypes.h"
+  84              		.file 4 "Generated_Source\\PSoC4/TEMP_IRQ.h"
+  85              		.file 5 "Generated_Source\\PSoC4/CRIT_TEMP_IRQ.h"
+  86              		.file 6 "Generated_Source\\PSoC4/Button.h"
+  87              		.file 7 "Generated_Source\\PSoC4/OPT_IRQ.h"
+  88              		.file 8 "Generated_Source\\PSoC4/NRF_IRQ.h"
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 3
+
+
+  89              		.section	.debug_info,"",%progbits
+  90              	.Ldebug_info0:
+  91 0000 80010000 		.4byte	0x180
+  92 0004 0400     		.2byte	0x4
+  93 0006 00000000 		.4byte	.Ldebug_abbrev0
+  94 000a 04       		.byte	0x4
+  95 000b 01       		.uleb128 0x1
+  96 000c 47010000 		.4byte	.LASF23
+  97 0010 01       		.byte	0x1
+  98 0011 37000000 		.4byte	.LASF24
+  99 0015 47000000 		.4byte	.LASF25
+ 100 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 101 001d 00000000 		.4byte	0
+ 102 0021 00000000 		.4byte	.Ldebug_line0
+ 103 0025 02       		.uleb128 0x2
+ 104 0026 01       		.byte	0x1
+ 105 0027 06       		.byte	0x6
+ 106 0028 FF010000 		.4byte	.LASF0
+ 107 002c 02       		.uleb128 0x2
+ 108 002d 01       		.byte	0x1
+ 109 002e 08       		.byte	0x8
+ 110 002f 83000000 		.4byte	.LASF1
+ 111 0033 02       		.uleb128 0x2
+ 112 0034 02       		.byte	0x2
+ 113 0035 05       		.byte	0x5
+ 114 0036 D5010000 		.4byte	.LASF2
+ 115 003a 02       		.uleb128 0x2
+ 116 003b 02       		.byte	0x2
+ 117 003c 07       		.byte	0x7
+ 118 003d 17000000 		.4byte	.LASF3
+ 119 0041 02       		.uleb128 0x2
+ 120 0042 04       		.byte	0x4
+ 121 0043 05       		.byte	0x5
+ 122 0044 E6010000 		.4byte	.LASF4
+ 123 0048 02       		.uleb128 0x2
+ 124 0049 04       		.byte	0x4
+ 125 004a 07       		.byte	0x7
+ 126 004b 9E000000 		.4byte	.LASF5
+ 127 004f 02       		.uleb128 0x2
+ 128 0050 08       		.byte	0x8
+ 129 0051 05       		.byte	0x5
+ 130 0052 34010000 		.4byte	.LASF6
+ 131 0056 02       		.uleb128 0x2
+ 132 0057 08       		.byte	0x8
+ 133 0058 07       		.byte	0x7
+ 134 0059 E7000000 		.4byte	.LASF7
+ 135 005d 03       		.uleb128 0x3
+ 136 005e 04       		.byte	0x4
+ 137 005f 05       		.byte	0x5
+ 138 0060 696E7400 		.ascii	"int\000"
+ 139 0064 02       		.uleb128 0x2
+ 140 0065 04       		.byte	0x4
+ 141 0066 07       		.byte	0x7
+ 142 0067 DA000000 		.4byte	.LASF8
+ 143 006b 04       		.uleb128 0x4
+ 144 006c B0000000 		.4byte	.LASF16
+ 145 0070 03       		.byte	0x3
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 4
+
+
+ 146 0071 C2       		.byte	0xc2
+ 147 0072 2C000000 		.4byte	0x2c
+ 148 0076 02       		.uleb128 0x2
+ 149 0077 04       		.byte	0x4
+ 150 0078 04       		.byte	0x4
+ 151 0079 41000000 		.4byte	.LASF9
+ 152 007d 02       		.uleb128 0x2
+ 153 007e 08       		.byte	0x8
+ 154 007f 04       		.byte	0x4
+ 155 0080 B6000000 		.4byte	.LASF10
+ 156 0084 02       		.uleb128 0x2
+ 157 0085 01       		.byte	0x1
+ 158 0086 08       		.byte	0x8
+ 159 0087 42010000 		.4byte	.LASF11
+ 160 008b 02       		.uleb128 0x2
+ 161 008c 04       		.byte	0x4
+ 162 008d 07       		.byte	0x7
+ 163 008e 1F010000 		.4byte	.LASF12
+ 164 0092 05       		.uleb128 0x5
+ 165 0093 05       		.byte	0x5
+ 166 0094 02       		.byte	0x2
+ 167 0095 10       		.byte	0x10
+ 168 0096 D7000000 		.4byte	0xd7
+ 169 009a 06       		.uleb128 0x6
+ 170 009b 1A010000 		.4byte	.LASF13
+ 171 009f 02       		.byte	0x2
+ 172 00a0 12       		.byte	0x12
+ 173 00a1 6B000000 		.4byte	0x6b
+ 174 00a5 00       		.byte	0
+ 175 00a6 06       		.uleb128 0x6
+ 176 00a7 D0000000 		.4byte	.LASF14
+ 177 00ab 02       		.byte	0x2
+ 178 00ac 13       		.byte	0x13
+ 179 00ad 6B000000 		.4byte	0x6b
+ 180 00b1 01       		.byte	0x1
+ 181 00b2 07       		.uleb128 0x7
+ 182 00b3 4F707400 		.ascii	"Opt\000"
+ 183 00b7 02       		.byte	0x2
+ 184 00b8 14       		.byte	0x14
+ 185 00b9 6B000000 		.4byte	0x6b
+ 186 00bd 02       		.byte	0x2
+ 187 00be 06       		.uleb128 0x6
+ 188 00bf DF010000 		.4byte	.LASF15
+ 189 00c3 02       		.byte	0x2
+ 190 00c4 15       		.byte	0x15
+ 191 00c5 6B000000 		.4byte	0x6b
+ 192 00c9 03       		.byte	0x3
+ 193 00ca 07       		.uleb128 0x7
+ 194 00cb 4E524600 		.ascii	"NRF\000"
+ 195 00cf 02       		.byte	0x2
+ 196 00d0 16       		.byte	0x16
+ 197 00d1 6B000000 		.4byte	0x6b
+ 198 00d5 04       		.byte	0x4
+ 199 00d6 00       		.byte	0
+ 200 00d7 04       		.uleb128 0x4
+ 201 00d8 07000000 		.4byte	.LASF17
+ 202 00dc 02       		.byte	0x2
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 5
+
+
+ 203 00dd 17       		.byte	0x17
+ 204 00de 92000000 		.4byte	0x92
+ 205 00e2 08       		.uleb128 0x8
+ 206 00e3 FE000000 		.4byte	.LASF26
+ 207 00e7 01       		.byte	0x1
+ 208 00e8 0E       		.byte	0xe
+ 209 00e9 00000000 		.4byte	.LFB33
+ 210 00ed 28000000 		.4byte	.LFE33-.LFB33
+ 211 00f1 01       		.uleb128 0x1
+ 212 00f2 9C       		.byte	0x9c
+ 213 00f3 25010000 		.4byte	0x125
+ 214 00f7 09       		.uleb128 0x9
+ 215 00f8 06000000 		.4byte	.LVL0
+ 216 00fc 4C010000 		.4byte	0x14c
+ 217 0100 09       		.uleb128 0x9
+ 218 0101 0E000000 		.4byte	.LVL1
+ 219 0105 57010000 		.4byte	0x157
+ 220 0109 09       		.uleb128 0x9
+ 221 010a 14000000 		.4byte	.LVL2
+ 222 010e 62010000 		.4byte	0x162
+ 223 0112 09       		.uleb128 0x9
+ 224 0113 1A000000 		.4byte	.LVL3
+ 225 0117 6D010000 		.4byte	0x16d
+ 226 011b 09       		.uleb128 0x9
+ 227 011c 20000000 		.4byte	.LVL4
+ 228 0120 78010000 		.4byte	0x178
+ 229 0124 00       		.byte	0
+ 230 0125 0A       		.uleb128 0xa
+ 231 0126 EF010000 		.4byte	.LASF27
+ 232 012a 01       		.byte	0x1
+ 233 012b 17       		.byte	0x17
+ 234 012c 00000000 		.4byte	.LFB34
+ 235 0130 02000000 		.4byte	.LFE34-.LFB34
+ 236 0134 01       		.uleb128 0x1
+ 237 0135 9C       		.byte	0x9c
+ 238 0136 0B       		.uleb128 0xb
+ 239 0137 00000000 		.4byte	.LASF28
+ 240 013b 02       		.byte	0x2
+ 241 013c 18       		.byte	0x18
+ 242 013d 47010000 		.4byte	0x147
+ 243 0141 05       		.uleb128 0x5
+ 244 0142 03       		.byte	0x3
+ 245 0143 00000000 		.4byte	ExtInt
+ 246 0147 0C       		.uleb128 0xc
+ 247 0148 D7000000 		.4byte	0xd7
+ 248 014c 0D       		.uleb128 0xd
+ 249 014d 0C010000 		.4byte	.LASF18
+ 250 0151 04       		.byte	0x4
+ 251 0152 20       		.byte	0x20
+ 252 0153 6B000000 		.4byte	0x6b
+ 253 0157 0D       		.uleb128 0xd
+ 254 0158 BD000000 		.4byte	.LASF19
+ 255 015c 05       		.byte	0x5
+ 256 015d 20       		.byte	0x20
+ 257 015e 6B000000 		.4byte	0x6b
+ 258 0162 0D       		.uleb128 0xd
+ 259 0163 28010000 		.4byte	.LASF20
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 6
+
+
+ 260 0167 06       		.byte	0x6
+ 261 0168 20       		.byte	0x20
+ 262 0169 6B000000 		.4byte	0x6b
+ 263 016d 0D       		.uleb128 0xd
+ 264 016e 91000000 		.4byte	.LASF21
+ 265 0172 07       		.byte	0x7
+ 266 0173 20       		.byte	0x20
+ 267 0174 6B000000 		.4byte	0x6b
+ 268 0178 0D       		.uleb128 0xd
+ 269 0179 2A000000 		.4byte	.LASF22
+ 270 017d 08       		.byte	0x8
+ 271 017e 20       		.byte	0x20
+ 272 017f 6B000000 		.4byte	0x6b
+ 273 0183 00       		.byte	0
+ 274              		.section	.debug_abbrev,"",%progbits
+ 275              	.Ldebug_abbrev0:
+ 276 0000 01       		.uleb128 0x1
+ 277 0001 11       		.uleb128 0x11
+ 278 0002 01       		.byte	0x1
+ 279 0003 25       		.uleb128 0x25
+ 280 0004 0E       		.uleb128 0xe
+ 281 0005 13       		.uleb128 0x13
+ 282 0006 0B       		.uleb128 0xb
+ 283 0007 03       		.uleb128 0x3
+ 284 0008 0E       		.uleb128 0xe
+ 285 0009 1B       		.uleb128 0x1b
+ 286 000a 0E       		.uleb128 0xe
+ 287 000b 55       		.uleb128 0x55
+ 288 000c 17       		.uleb128 0x17
+ 289 000d 11       		.uleb128 0x11
+ 290 000e 01       		.uleb128 0x1
+ 291 000f 10       		.uleb128 0x10
+ 292 0010 17       		.uleb128 0x17
+ 293 0011 00       		.byte	0
+ 294 0012 00       		.byte	0
+ 295 0013 02       		.uleb128 0x2
+ 296 0014 24       		.uleb128 0x24
+ 297 0015 00       		.byte	0
+ 298 0016 0B       		.uleb128 0xb
+ 299 0017 0B       		.uleb128 0xb
+ 300 0018 3E       		.uleb128 0x3e
+ 301 0019 0B       		.uleb128 0xb
+ 302 001a 03       		.uleb128 0x3
+ 303 001b 0E       		.uleb128 0xe
+ 304 001c 00       		.byte	0
+ 305 001d 00       		.byte	0
+ 306 001e 03       		.uleb128 0x3
+ 307 001f 24       		.uleb128 0x24
+ 308 0020 00       		.byte	0
+ 309 0021 0B       		.uleb128 0xb
+ 310 0022 0B       		.uleb128 0xb
+ 311 0023 3E       		.uleb128 0x3e
+ 312 0024 0B       		.uleb128 0xb
+ 313 0025 03       		.uleb128 0x3
+ 314 0026 08       		.uleb128 0x8
+ 315 0027 00       		.byte	0
+ 316 0028 00       		.byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 7
+
+
+ 317 0029 04       		.uleb128 0x4
+ 318 002a 16       		.uleb128 0x16
+ 319 002b 00       		.byte	0
+ 320 002c 03       		.uleb128 0x3
+ 321 002d 0E       		.uleb128 0xe
+ 322 002e 3A       		.uleb128 0x3a
+ 323 002f 0B       		.uleb128 0xb
+ 324 0030 3B       		.uleb128 0x3b
+ 325 0031 0B       		.uleb128 0xb
+ 326 0032 49       		.uleb128 0x49
+ 327 0033 13       		.uleb128 0x13
+ 328 0034 00       		.byte	0
+ 329 0035 00       		.byte	0
+ 330 0036 05       		.uleb128 0x5
+ 331 0037 13       		.uleb128 0x13
+ 332 0038 01       		.byte	0x1
+ 333 0039 0B       		.uleb128 0xb
+ 334 003a 0B       		.uleb128 0xb
+ 335 003b 3A       		.uleb128 0x3a
+ 336 003c 0B       		.uleb128 0xb
+ 337 003d 3B       		.uleb128 0x3b
+ 338 003e 0B       		.uleb128 0xb
+ 339 003f 01       		.uleb128 0x1
+ 340 0040 13       		.uleb128 0x13
+ 341 0041 00       		.byte	0
+ 342 0042 00       		.byte	0
+ 343 0043 06       		.uleb128 0x6
+ 344 0044 0D       		.uleb128 0xd
+ 345 0045 00       		.byte	0
+ 346 0046 03       		.uleb128 0x3
+ 347 0047 0E       		.uleb128 0xe
+ 348 0048 3A       		.uleb128 0x3a
+ 349 0049 0B       		.uleb128 0xb
+ 350 004a 3B       		.uleb128 0x3b
+ 351 004b 0B       		.uleb128 0xb
+ 352 004c 49       		.uleb128 0x49
+ 353 004d 13       		.uleb128 0x13
+ 354 004e 38       		.uleb128 0x38
+ 355 004f 0B       		.uleb128 0xb
+ 356 0050 00       		.byte	0
+ 357 0051 00       		.byte	0
+ 358 0052 07       		.uleb128 0x7
+ 359 0053 0D       		.uleb128 0xd
+ 360 0054 00       		.byte	0
+ 361 0055 03       		.uleb128 0x3
+ 362 0056 08       		.uleb128 0x8
+ 363 0057 3A       		.uleb128 0x3a
+ 364 0058 0B       		.uleb128 0xb
+ 365 0059 3B       		.uleb128 0x3b
+ 366 005a 0B       		.uleb128 0xb
+ 367 005b 49       		.uleb128 0x49
+ 368 005c 13       		.uleb128 0x13
+ 369 005d 38       		.uleb128 0x38
+ 370 005e 0B       		.uleb128 0xb
+ 371 005f 00       		.byte	0
+ 372 0060 00       		.byte	0
+ 373 0061 08       		.uleb128 0x8
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 8
+
+
+ 374 0062 2E       		.uleb128 0x2e
+ 375 0063 01       		.byte	0x1
+ 376 0064 3F       		.uleb128 0x3f
+ 377 0065 19       		.uleb128 0x19
+ 378 0066 03       		.uleb128 0x3
+ 379 0067 0E       		.uleb128 0xe
+ 380 0068 3A       		.uleb128 0x3a
+ 381 0069 0B       		.uleb128 0xb
+ 382 006a 3B       		.uleb128 0x3b
+ 383 006b 0B       		.uleb128 0xb
+ 384 006c 27       		.uleb128 0x27
+ 385 006d 19       		.uleb128 0x19
+ 386 006e 11       		.uleb128 0x11
+ 387 006f 01       		.uleb128 0x1
+ 388 0070 12       		.uleb128 0x12
+ 389 0071 06       		.uleb128 0x6
+ 390 0072 40       		.uleb128 0x40
+ 391 0073 18       		.uleb128 0x18
+ 392 0074 9742     		.uleb128 0x2117
+ 393 0076 19       		.uleb128 0x19
+ 394 0077 01       		.uleb128 0x1
+ 395 0078 13       		.uleb128 0x13
+ 396 0079 00       		.byte	0
+ 397 007a 00       		.byte	0
+ 398 007b 09       		.uleb128 0x9
+ 399 007c 898201   		.uleb128 0x4109
+ 400 007f 00       		.byte	0
+ 401 0080 11       		.uleb128 0x11
+ 402 0081 01       		.uleb128 0x1
+ 403 0082 31       		.uleb128 0x31
+ 404 0083 13       		.uleb128 0x13
+ 405 0084 00       		.byte	0
+ 406 0085 00       		.byte	0
+ 407 0086 0A       		.uleb128 0xa
+ 408 0087 2E       		.uleb128 0x2e
+ 409 0088 00       		.byte	0
+ 410 0089 3F       		.uleb128 0x3f
+ 411 008a 19       		.uleb128 0x19
+ 412 008b 03       		.uleb128 0x3
+ 413 008c 0E       		.uleb128 0xe
+ 414 008d 3A       		.uleb128 0x3a
+ 415 008e 0B       		.uleb128 0xb
+ 416 008f 3B       		.uleb128 0x3b
+ 417 0090 0B       		.uleb128 0xb
+ 418 0091 27       		.uleb128 0x27
+ 419 0092 19       		.uleb128 0x19
+ 420 0093 11       		.uleb128 0x11
+ 421 0094 01       		.uleb128 0x1
+ 422 0095 12       		.uleb128 0x12
+ 423 0096 06       		.uleb128 0x6
+ 424 0097 40       		.uleb128 0x40
+ 425 0098 18       		.uleb128 0x18
+ 426 0099 9742     		.uleb128 0x2117
+ 427 009b 19       		.uleb128 0x19
+ 428 009c 00       		.byte	0
+ 429 009d 00       		.byte	0
+ 430 009e 0B       		.uleb128 0xb
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 9
+
+
+ 431 009f 34       		.uleb128 0x34
+ 432 00a0 00       		.byte	0
+ 433 00a1 03       		.uleb128 0x3
+ 434 00a2 0E       		.uleb128 0xe
+ 435 00a3 3A       		.uleb128 0x3a
+ 436 00a4 0B       		.uleb128 0xb
+ 437 00a5 3B       		.uleb128 0x3b
+ 438 00a6 0B       		.uleb128 0xb
+ 439 00a7 49       		.uleb128 0x49
+ 440 00a8 13       		.uleb128 0x13
+ 441 00a9 3F       		.uleb128 0x3f
+ 442 00aa 19       		.uleb128 0x19
+ 443 00ab 02       		.uleb128 0x2
+ 444 00ac 18       		.uleb128 0x18
+ 445 00ad 00       		.byte	0
+ 446 00ae 00       		.byte	0
+ 447 00af 0C       		.uleb128 0xc
+ 448 00b0 35       		.uleb128 0x35
+ 449 00b1 00       		.byte	0
+ 450 00b2 49       		.uleb128 0x49
+ 451 00b3 13       		.uleb128 0x13
+ 452 00b4 00       		.byte	0
+ 453 00b5 00       		.byte	0
+ 454 00b6 0D       		.uleb128 0xd
+ 455 00b7 2E       		.uleb128 0x2e
+ 456 00b8 00       		.byte	0
+ 457 00b9 3F       		.uleb128 0x3f
+ 458 00ba 19       		.uleb128 0x19
+ 459 00bb 03       		.uleb128 0x3
+ 460 00bc 0E       		.uleb128 0xe
+ 461 00bd 3A       		.uleb128 0x3a
+ 462 00be 0B       		.uleb128 0xb
+ 463 00bf 3B       		.uleb128 0x3b
+ 464 00c0 0B       		.uleb128 0xb
+ 465 00c1 27       		.uleb128 0x27
+ 466 00c2 19       		.uleb128 0x19
+ 467 00c3 49       		.uleb128 0x49
+ 468 00c4 13       		.uleb128 0x13
+ 469 00c5 3C       		.uleb128 0x3c
+ 470 00c6 19       		.uleb128 0x19
+ 471 00c7 00       		.byte	0
+ 472 00c8 00       		.byte	0
+ 473 00c9 00       		.byte	0
+ 474              		.section	.debug_aranges,"",%progbits
+ 475 0000 24000000 		.4byte	0x24
+ 476 0004 0200     		.2byte	0x2
+ 477 0006 00000000 		.4byte	.Ldebug_info0
+ 478 000a 04       		.byte	0x4
+ 479 000b 00       		.byte	0
+ 480 000c 0000     		.2byte	0
+ 481 000e 0000     		.2byte	0
+ 482 0010 00000000 		.4byte	.LFB33
+ 483 0014 28000000 		.4byte	.LFE33-.LFB33
+ 484 0018 00000000 		.4byte	.LFB34
+ 485 001c 02000000 		.4byte	.LFE34-.LFB34
+ 486 0020 00000000 		.4byte	0
+ 487 0024 00000000 		.4byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 10
+
+
+ 488              		.section	.debug_ranges,"",%progbits
+ 489              	.Ldebug_ranges0:
+ 490 0000 00000000 		.4byte	.LFB33
+ 491 0004 28000000 		.4byte	.LFE33
+ 492 0008 00000000 		.4byte	.LFB34
+ 493 000c 02000000 		.4byte	.LFE34
+ 494 0010 00000000 		.4byte	0
+ 495 0014 00000000 		.4byte	0
+ 496              		.section	.debug_line,"",%progbits
+ 497              	.Ldebug_line0:
+ 498 0000 C3000000 		.section	.debug_str,"MS",%progbits,1
+ 498      02009800 
+ 498      00000201 
+ 498      FB0E0D00 
+ 498      01010101 
+ 499              	.LASF28:
+ 500 0000 45787449 		.ascii	"ExtInt\000"
+ 500      6E7400
+ 501              	.LASF17:
+ 502 0007 496E7465 		.ascii	"InterruptStruct\000"
+ 502      72727570 
+ 502      74537472 
+ 502      75637400 
+ 503              	.LASF3:
+ 504 0017 73686F72 		.ascii	"short unsigned int\000"
+ 504      7420756E 
+ 504      7369676E 
+ 504      65642069 
+ 504      6E7400
+ 505              	.LASF22:
+ 506 002a 4E52465F 		.ascii	"NRF_IRQ_Read\000"
+ 506      4952515F 
+ 506      52656164 
+ 506      00
+ 507              	.LASF24:
+ 508 0037 2E5C4D79 		.ascii	".\\MyLib.c\000"
+ 508      4C69622E 
+ 508      6300
+ 509              	.LASF9:
+ 510 0041 666C6F61 		.ascii	"float\000"
+ 510      7400
+ 511              	.LASF25:
+ 512 0047 433A5C45 		.ascii	"C:\\EAGLE\\My\\WirellesLoad\\WirellesLoad\\Wirelles"
+ 512      41474C45 
+ 512      5C4D795C 
+ 512      57697265 
+ 512      6C6C6573 
+ 513 0075 4C6F6164 		.ascii	"Load_v1.cydsn\000"
+ 513      5F76312E 
+ 513      63796473 
+ 513      6E00
+ 514              	.LASF1:
+ 515 0083 756E7369 		.ascii	"unsigned char\000"
+ 515      676E6564 
+ 515      20636861 
+ 515      7200
+ 516              	.LASF21:
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 11
+
+
+ 517 0091 4F50545F 		.ascii	"OPT_IRQ_Read\000"
+ 517      4952515F 
+ 517      52656164 
+ 517      00
+ 518              	.LASF5:
+ 519 009e 6C6F6E67 		.ascii	"long unsigned int\000"
+ 519      20756E73 
+ 519      69676E65 
+ 519      6420696E 
+ 519      7400
+ 520              	.LASF16:
+ 521 00b0 75696E74 		.ascii	"uint8\000"
+ 521      3800
+ 522              	.LASF10:
+ 523 00b6 646F7562 		.ascii	"double\000"
+ 523      6C6500
+ 524              	.LASF19:
+ 525 00bd 43524954 		.ascii	"CRIT_TEMP_IRQ_Read\000"
+ 525      5F54454D 
+ 525      505F4952 
+ 525      515F5265 
+ 525      616400
+ 526              	.LASF14:
+ 527 00d0 43726974 		.ascii	"Crit_Temp\000"
+ 527      5F54656D 
+ 527      7000
+ 528              	.LASF8:
+ 529 00da 756E7369 		.ascii	"unsigned int\000"
+ 529      676E6564 
+ 529      20696E74 
+ 529      00
+ 530              	.LASF7:
+ 531 00e7 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 531      206C6F6E 
+ 531      6720756E 
+ 531      7369676E 
+ 531      65642069 
+ 532              	.LASF26:
+ 533 00fe 45787449 		.ascii	"ExtInter_Head\000"
+ 533      6E746572 
+ 533      5F486561 
+ 533      6400
+ 534              	.LASF18:
+ 535 010c 54454D50 		.ascii	"TEMP_IRQ_Read\000"
+ 535      5F495251 
+ 535      5F526561 
+ 535      6400
+ 536              	.LASF13:
+ 537 011a 54656D70 		.ascii	"Temp\000"
+ 537      00
+ 538              	.LASF12:
+ 539 011f 73697A65 		.ascii	"sizetype\000"
+ 539      74797065 
+ 539      00
+ 540              	.LASF20:
+ 541 0128 42757474 		.ascii	"Button_Read\000"
+ 541      6F6E5F52 
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\cctrxoBA.s 			page 12
+
+
+ 541      65616400 
+ 542              	.LASF6:
+ 543 0134 6C6F6E67 		.ascii	"long long int\000"
+ 543      206C6F6E 
+ 543      6720696E 
+ 543      7400
+ 544              	.LASF11:
+ 545 0142 63686172 		.ascii	"char\000"
+ 545      00
+ 546              	.LASF23:
+ 547 0147 474E5520 		.ascii	"GNU C 4.9.3 20150303 (release) [ARM/embedded-4_9-br"
+ 547      4320342E 
+ 547      392E3320 
+ 547      32303135 
+ 547      30333033 
+ 548 017a 616E6368 		.ascii	"anch revision 221220] -mcpu=cortex-m0 -mthumb -g -O"
+ 548      20726576 
+ 548      6973696F 
+ 548      6E203232 
+ 548      31323230 
+ 549 01ad 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 549      66756E63 
+ 549      74696F6E 
+ 549      2D736563 
+ 549      74696F6E 
+ 550              	.LASF2:
+ 551 01d5 73686F72 		.ascii	"short int\000"
+ 551      7420696E 
+ 551      7400
+ 552              	.LASF15:
+ 553 01df 42757474 		.ascii	"Button\000"
+ 553      6F6E00
+ 554              	.LASF4:
+ 555 01e6 6C6F6E67 		.ascii	"long int\000"
+ 555      20696E74 
+ 555      00
+ 556              	.LASF27:
+ 557 01ef 496E7465 		.ascii	"InterruptAction\000"
+ 557      72727570 
+ 557      74416374 
+ 557      696F6E00 
+ 558              	.LASF0:
+ 559 01ff 7369676E 		.ascii	"signed char\000"
+ 559      65642063 
+ 559      68617200 
+ 560              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.9.3 20150303 (release) [ARM/embedded-4_9-br

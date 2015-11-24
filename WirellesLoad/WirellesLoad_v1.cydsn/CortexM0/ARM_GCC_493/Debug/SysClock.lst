@@ -1,0 +1,1443 @@
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 1
+
+
+   1              		.cpu cortex-m0
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 1
+  10              		.eabi_attribute 34, 0
+  11              		.eabi_attribute 18, 4
+  12              		.code	16
+  13              		.file	"SysClock.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.System_Timer_ISR,"ax",%progbits
+  18              		.align	2
+  19              		.global	System_Timer_ISR
+  20              		.code	16
+  21              		.thumb_func
+  22              		.type	System_Timer_ISR, %function
+  23              	System_Timer_ISR:
+  24              	.LFB36:
+  25              		.file 1 ".\\SysClock.c"
+   1:.\SysClock.c  **** /* ========================================
+   2:.\SysClock.c  ****  *
+   3:.\SysClock.c  ****  * Copyright YOUR COMPANY, THE YEAR
+   4:.\SysClock.c  ****  * All Rights Reserved
+   5:.\SysClock.c  ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:.\SysClock.c  ****  *
+   7:.\SysClock.c  ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\SysClock.c  ****  * WHICH IS THE PROPERTY OF your company.
+   9:.\SysClock.c  ****  *
+  10:.\SysClock.c  ****  * ========================================
+  11:.\SysClock.c  **** */
+  12:.\SysClock.c  **** #include "SysClock.h"
+  13:.\SysClock.c  **** 
+  14:.\SysClock.c  **** void System_Timer_Start()
+  15:.\SysClock.c  **** {
+  16:.\SysClock.c  ****     Timer_Start();
+  17:.\SysClock.c  ****     Timer_Interrupt_StartEx(System_Timer_ISR);
+  18:.\SysClock.c  ****     volatile uint8_t Scroll = 0;
+  19:.\SysClock.c  ****     for(Scroll = 0; Scroll < MAX_Number_Of_Sys_Timer; Scroll++)
+  20:.\SysClock.c  ****     {
+  21:.\SysClock.c  ****         System_Timer[Scroll].Number = 255;
+  22:.\SysClock.c  ****         System_Timer[Scroll].Time = 0;
+  23:.\SysClock.c  ****         System_Timer_Flag[Scroll].Flag = 0;
+  24:.\SysClock.c  ****     }
+  25:.\SysClock.c  **** }
+  26:.\SysClock.c  **** void System_Timer_Add(uint8 New_Number, uint32 New_Time)
+  27:.\SysClock.c  **** {
+  28:.\SysClock.c  ****     CyGlobalIntDisable;
+  29:.\SysClock.c  ****     volatile uint8 i;
+  30:.\SysClock.c  ****     for(i = 0; i < MAX_Number_Of_Sys_Timer; i++)
+  31:.\SysClock.c  ****     {
+  32:.\SysClock.c  ****         if(System_Timer[i].Number == New_Number)
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 2
+
+
+  33:.\SysClock.c  ****         {
+  34:.\SysClock.c  ****             System_Timer[i].Time = New_Time;
+  35:.\SysClock.c  ****             System_Timer_Flag[New_Number].Flag = 0;
+  36:.\SysClock.c  ****             CyGlobalIntEnable;
+  37:.\SysClock.c  ****             return;
+  38:.\SysClock.c  ****         }
+  39:.\SysClock.c  ****     }
+  40:.\SysClock.c  ****     for(i = 0; i < MAX_Number_Of_Sys_Timer; i++)
+  41:.\SysClock.c  ****     {
+  42:.\SysClock.c  ****         if(System_Timer[i].Number == 255)
+  43:.\SysClock.c  ****         {
+  44:.\SysClock.c  ****             System_Timer[i].Number = New_Number;
+  45:.\SysClock.c  ****             System_Timer[i].Time = New_Time;
+  46:.\SysClock.c  ****             System_Timer_Flag[New_Number].Flag = 0;
+  47:.\SysClock.c  ****             CyGlobalIntEnable;
+  48:.\SysClock.c  ****             return;
+  49:.\SysClock.c  ****         }
+  50:.\SysClock.c  ****     }
+  51:.\SysClock.c  ****     CyGlobalIntEnable;
+  52:.\SysClock.c  ****  }
+  53:.\SysClock.c  **** 
+  54:.\SysClock.c  **** void System_Timer_Remove(uint8 Number)
+  55:.\SysClock.c  **** {
+  56:.\SysClock.c  ****     CyGlobalIntDisable;
+  57:.\SysClock.c  ****     volatile uint8 i;
+  58:.\SysClock.c  ****     for(i = 0; i < 10; i++)
+  59:.\SysClock.c  ****     {
+  60:.\SysClock.c  ****         if(System_Timer[i].Number == Number)
+  61:.\SysClock.c  ****         {
+  62:.\SysClock.c  ****             System_Timer[i].Number = 255;
+  63:.\SysClock.c  ****             System_Timer_Flag[Number].Flag = 0;
+  64:.\SysClock.c  ****             CyGlobalIntEnable;
+  65:.\SysClock.c  ****             break;
+  66:.\SysClock.c  ****         }
+  67:.\SysClock.c  ****     }
+  68:.\SysClock.c  ****     CyGlobalIntEnable;
+  69:.\SysClock.c  **** }
+  70:.\SysClock.c  **** 
+  71:.\SysClock.c  **** CY_ISR(System_Timer_ISR)
+  72:.\SysClock.c  **** {
+  26              		.loc 1 72 0
+  27              		.cfi_startproc
+  28 0000 10B5     		push	{r4, lr}
+  29              		.cfi_def_cfa_offset 8
+  30              		.cfi_offset 4, -8
+  31              		.cfi_offset 14, -4
+  32 0002 82B0     		sub	sp, sp, #8
+  33              		.cfi_def_cfa_offset 16
+  73:.\SysClock.c  ****     CyGlobalIntDisable;
+  34              		.loc 1 73 0
+  35              	@ 73 ".\SysClock.c" 1
+  36 0004 72B6     		CPSID   i
+  37              	@ 0 "" 2
+  74:.\SysClock.c  ****     volatile uint8 i;
+  75:.\SysClock.c  ****     for(i = 0; i < MAX_Number_Of_Sys_Timer; i++)
+  38              		.loc 1 75 0
+  39              		.code	16
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 3
+
+
+  40 0006 0022     		mov	r2, #0
+  41 0008 6B46     		mov	r3, sp
+  42 000a DA71     		strb	r2, [r3, #7]
+  43 000c 2DE0     		b	.L2
+  44              	.L5:
+  76:.\SysClock.c  ****     {
+  77:.\SysClock.c  ****         if(System_Timer[i].Number == 255) continue;
+  45              		.loc 1 77 0
+  46 000e 6B46     		mov	r3, sp
+  47 0010 0733     		add	r3, r3, #7
+  48 0012 1B78     		ldrb	r3, [r3]
+  49 0014 DB00     		lsl	r3, r3, #3
+  50 0016 194A     		ldr	r2, .L6
+  51 0018 9B5C     		ldrb	r3, [r3, r2]
+  52 001a DBB2     		uxtb	r3, r3
+  53 001c FF2B     		cmp	r3, #255
+  54 001e 1ED0     		beq	.L3
+  78:.\SysClock.c  ****         if(System_Timer[i].Time != 0)
+  55              		.loc 1 78 0
+  56 0020 6B46     		mov	r3, sp
+  57 0022 0733     		add	r3, r3, #7
+  58 0024 1B78     		ldrb	r3, [r3]
+  59 0026 DB00     		lsl	r3, r3, #3
+  60 0028 D318     		add	r3, r2, r3
+  61 002a 5B68     		ldr	r3, [r3, #4]
+  62 002c 002B     		cmp	r3, #0
+  63 002e 08D0     		beq	.L4
+  79:.\SysClock.c  ****         {
+  80:.\SysClock.c  ****             System_Timer[i].Time--;
+  64              		.loc 1 80 0
+  65 0030 6B46     		mov	r3, sp
+  66 0032 0733     		add	r3, r3, #7
+  67 0034 1B78     		ldrb	r3, [r3]
+  68 0036 DB00     		lsl	r3, r3, #3
+  69 0038 D318     		add	r3, r2, r3
+  70 003a 5A68     		ldr	r2, [r3, #4]
+  71 003c 013A     		sub	r2, r2, #1
+  72 003e 5A60     		str	r2, [r3, #4]
+  73 0040 0DE0     		b	.L3
+  74              	.L4:
+  81:.\SysClock.c  ****         }
+  82:.\SysClock.c  ****         else
+  83:.\SysClock.c  ****         {
+  84:.\SysClock.c  ****             System_Timer_Flag[System_Timer[i].Number].Flag = 1;
+  75              		.loc 1 84 0
+  76 0042 6B46     		mov	r3, sp
+  77 0044 D91D     		add	r1, r3, #7
+  78 0046 DB79     		ldrb	r3, [r3, #7]
+  79 0048 0C4A     		ldr	r2, .L6
+  80 004a DB00     		lsl	r3, r3, #3
+  81 004c 9B5C     		ldrb	r3, [r3, r2]
+  82 004e DBB2     		uxtb	r3, r3
+  83 0050 0124     		mov	r4, #1
+  84 0052 0B48     		ldr	r0, .L6+4
+  85 0054 C454     		strb	r4, [r0, r3]
+  85:.\SysClock.c  ****             System_Timer[i].Number = 255;
+  86              		.loc 1 85 0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 4
+
+
+  87 0056 0B78     		ldrb	r3, [r1]
+  88 0058 DB00     		lsl	r3, r3, #3
+  89 005a FF21     		mov	r1, #255
+  90 005c 9954     		strb	r1, [r3, r2]
+  91              	.L3:
+  75:.\SysClock.c  ****     {
+  92              		.loc 1 75 0 discriminator 2
+  93 005e 6B46     		mov	r3, sp
+  94 0060 DA1D     		add	r2, r3, #7
+  95 0062 DB79     		ldrb	r3, [r3, #7]
+  96 0064 0133     		add	r3, r3, #1
+  97 0066 DBB2     		uxtb	r3, r3
+  98 0068 1370     		strb	r3, [r2]
+  99              	.L2:
+  75:.\SysClock.c  ****     {
+ 100              		.loc 1 75 0 is_stmt 0 discriminator 1
+ 101 006a 6B46     		mov	r3, sp
+ 102 006c 0733     		add	r3, r3, #7
+ 103 006e 1B78     		ldrb	r3, [r3]
+ 104 0070 DBB2     		uxtb	r3, r3
+ 105 0072 042B     		cmp	r3, #4
+ 106 0074 CBD9     		bls	.L5
+  86:.\SysClock.c  ****         }
+  87:.\SysClock.c  ****     }
+  88:.\SysClock.c  ****     CyGlobalIntEnable;
+ 107              		.loc 1 88 0 is_stmt 1
+ 108              	@ 88 ".\SysClock.c" 1
+ 109 0076 62B6     		CPSIE   i
+ 110              	@ 0 "" 2
+  89:.\SysClock.c  **** }
+ 111              		.loc 1 89 0
+ 112              		.code	16
+ 113 0078 02B0     		add	sp, sp, #8
+ 114              		@ sp needed
+ 115 007a 10BD     		pop	{r4, pc}
+ 116              	.L7:
+ 117              		.align	2
+ 118              	.L6:
+ 119 007c 00000000 		.word	System_Timer
+ 120 0080 00000000 		.word	System_Timer_Flag
+ 121              		.cfi_endproc
+ 122              	.LFE36:
+ 123              		.size	System_Timer_ISR, .-System_Timer_ISR
+ 124              		.section	.text.System_Timer_Start,"ax",%progbits
+ 125              		.align	2
+ 126              		.global	System_Timer_Start
+ 127              		.code	16
+ 128              		.thumb_func
+ 129              		.type	System_Timer_Start, %function
+ 130              	System_Timer_Start:
+ 131              	.LFB33:
+  15:.\SysClock.c  ****     Timer_Start();
+ 132              		.loc 1 15 0
+ 133              		.cfi_startproc
+ 134 0000 00B5     		push	{lr}
+ 135              		.cfi_def_cfa_offset 4
+ 136              		.cfi_offset 14, -4
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 5
+
+
+ 137 0002 83B0     		sub	sp, sp, #12
+ 138              		.cfi_def_cfa_offset 16
+  16:.\SysClock.c  ****     Timer_Interrupt_StartEx(System_Timer_ISR);
+ 139              		.loc 1 16 0
+ 140 0004 FFF7FEFF 		bl	Timer_Start
+ 141              	.LVL0:
+  17:.\SysClock.c  ****     volatile uint8_t Scroll = 0;
+ 142              		.loc 1 17 0
+ 143 0008 1148     		ldr	r0, .L11
+ 144 000a FFF7FEFF 		bl	Timer_Interrupt_StartEx
+ 145              	.LVL1:
+  18:.\SysClock.c  ****     for(Scroll = 0; Scroll < MAX_Number_Of_Sys_Timer; Scroll++)
+ 146              		.loc 1 18 0
+ 147 000e 6B46     		mov	r3, sp
+ 148 0010 0022     		mov	r2, #0
+ 149 0012 DA71     		strb	r2, [r3, #7]
+  19:.\SysClock.c  ****     {
+ 150              		.loc 1 19 0
+ 151 0014 DA71     		strb	r2, [r3, #7]
+ 152 0016 12E0     		b	.L9
+ 153              	.L10:
+  21:.\SysClock.c  ****         System_Timer[Scroll].Time = 0;
+ 154              		.loc 1 21 0 discriminator 3
+ 155 0018 6B46     		mov	r3, sp
+ 156 001a D979     		ldrb	r1, [r3, #7]
+ 157 001c 0D48     		ldr	r0, .L11+4
+ 158 001e C900     		lsl	r1, r1, #3
+ 159 0020 FF22     		mov	r2, #255
+ 160 0022 0A54     		strb	r2, [r1, r0]
+  22:.\SysClock.c  ****         System_Timer_Flag[Scroll].Flag = 0;
+ 161              		.loc 1 22 0 discriminator 3
+ 162 0024 DA79     		ldrb	r2, [r3, #7]
+ 163 0026 D200     		lsl	r2, r2, #3
+ 164 0028 8218     		add	r2, r0, r2
+ 165 002a 0021     		mov	r1, #0
+ 166 002c 5160     		str	r1, [r2, #4]
+  23:.\SysClock.c  ****     }
+ 167              		.loc 1 23 0 discriminator 3
+ 168 002e DA79     		ldrb	r2, [r3, #7]
+ 169 0030 D2B2     		uxtb	r2, r2
+ 170 0032 0948     		ldr	r0, .L11+8
+ 171 0034 8154     		strb	r1, [r0, r2]
+  19:.\SysClock.c  ****     {
+ 172              		.loc 1 19 0 discriminator 3
+ 173 0036 DA79     		ldrb	r2, [r3, #7]
+ 174 0038 0132     		add	r2, r2, #1
+ 175 003a D2B2     		uxtb	r2, r2
+ 176 003c DA71     		strb	r2, [r3, #7]
+ 177              	.L9:
+  19:.\SysClock.c  ****     {
+ 178              		.loc 1 19 0 is_stmt 0 discriminator 1
+ 179 003e 6B46     		mov	r3, sp
+ 180 0040 0733     		add	r3, r3, #7
+ 181 0042 1B78     		ldrb	r3, [r3]
+ 182 0044 DBB2     		uxtb	r3, r3
+ 183 0046 042B     		cmp	r3, #4
+ 184 0048 E6D9     		bls	.L10
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 6
+
+
+  25:.\SysClock.c  **** void System_Timer_Add(uint8 New_Number, uint32 New_Time)
+ 185              		.loc 1 25 0 is_stmt 1
+ 186 004a 03B0     		add	sp, sp, #12
+ 187              		@ sp needed
+ 188 004c 00BD     		pop	{pc}
+ 189              	.L12:
+ 190 004e C046     		.align	2
+ 191              	.L11:
+ 192 0050 00000000 		.word	System_Timer_ISR
+ 193 0054 00000000 		.word	System_Timer
+ 194 0058 00000000 		.word	System_Timer_Flag
+ 195              		.cfi_endproc
+ 196              	.LFE33:
+ 197              		.size	System_Timer_Start, .-System_Timer_Start
+ 198              		.section	.text.System_Timer_Add,"ax",%progbits
+ 199              		.align	2
+ 200              		.global	System_Timer_Add
+ 201              		.code	16
+ 202              		.thumb_func
+ 203              		.type	System_Timer_Add, %function
+ 204              	System_Timer_Add:
+ 205              	.LFB34:
+  27:.\SysClock.c  ****     CyGlobalIntDisable;
+ 206              		.loc 1 27 0
+ 207              		.cfi_startproc
+ 208              	.LVL2:
+ 209 0000 10B5     		push	{r4, lr}
+ 210              		.cfi_def_cfa_offset 8
+ 211              		.cfi_offset 4, -8
+ 212              		.cfi_offset 14, -4
+ 213 0002 82B0     		sub	sp, sp, #8
+ 214              		.cfi_def_cfa_offset 16
+  28:.\SysClock.c  ****     volatile uint8 i;
+ 215              		.loc 1 28 0
+ 216              	@ 28 ".\SysClock.c" 1
+ 217 0004 72B6     		CPSID   i
+ 218              	@ 0 "" 2
+  30:.\SysClock.c  ****     {
+ 219              		.loc 1 30 0
+ 220              		.code	16
+ 221 0006 0022     		mov	r2, #0
+ 222 0008 6B46     		mov	r3, sp
+ 223 000a DA71     		strb	r2, [r3, #7]
+ 224 000c 19E0     		b	.L14
+ 225              	.L17:
+  32:.\SysClock.c  ****         {
+ 226              		.loc 1 32 0
+ 227 000e 6B46     		mov	r3, sp
+ 228 0010 0733     		add	r3, r3, #7
+ 229 0012 1B78     		ldrb	r3, [r3]
+ 230 0014 DB00     		lsl	r3, r3, #3
+ 231 0016 234A     		ldr	r2, .L21
+ 232 0018 9B5C     		ldrb	r3, [r3, r2]
+ 233 001a DBB2     		uxtb	r3, r3
+ 234 001c 8342     		cmp	r3, r0
+ 235 001e 0AD1     		bne	.L15
+  34:.\SysClock.c  ****             System_Timer_Flag[New_Number].Flag = 0;
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 7
+
+
+ 236              		.loc 1 34 0
+ 237 0020 6B46     		mov	r3, sp
+ 238 0022 0733     		add	r3, r3, #7
+ 239 0024 1B78     		ldrb	r3, [r3]
+ 240 0026 DB00     		lsl	r3, r3, #3
+ 241 0028 D318     		add	r3, r2, r3
+ 242 002a 5960     		str	r1, [r3, #4]
+  35:.\SysClock.c  ****             CyGlobalIntEnable;
+ 243              		.loc 1 35 0
+ 244 002c 0022     		mov	r2, #0
+ 245 002e 1E4B     		ldr	r3, .L21+4
+ 246 0030 1A54     		strb	r2, [r3, r0]
+  36:.\SysClock.c  ****             return;
+ 247              		.loc 1 36 0
+ 248              	@ 36 ".\SysClock.c" 1
+ 249 0032 62B6     		CPSIE   i
+ 250              	@ 0 "" 2
+  37:.\SysClock.c  ****         }
+ 251              		.loc 1 37 0
+ 252              		.code	16
+ 253 0034 34E0     		b	.L13
+ 254              	.L15:
+  30:.\SysClock.c  ****     {
+ 255              		.loc 1 30 0 discriminator 2
+ 256 0036 6B46     		mov	r3, sp
+ 257 0038 DA1D     		add	r2, r3, #7
+ 258 003a DB79     		ldrb	r3, [r3, #7]
+ 259 003c 0133     		add	r3, r3, #1
+ 260 003e DBB2     		uxtb	r3, r3
+ 261 0040 1370     		strb	r3, [r2]
+ 262              	.L14:
+  30:.\SysClock.c  ****     {
+ 263              		.loc 1 30 0 is_stmt 0 discriminator 1
+ 264 0042 6B46     		mov	r3, sp
+ 265 0044 0733     		add	r3, r3, #7
+ 266 0046 1B78     		ldrb	r3, [r3]
+ 267 0048 DBB2     		uxtb	r3, r3
+ 268 004a 042B     		cmp	r3, #4
+ 269 004c DFD9     		bls	.L17
+  40:.\SysClock.c  ****     {
+ 270              		.loc 1 40 0 is_stmt 1
+ 271 004e 0022     		mov	r2, #0
+ 272 0050 6B46     		mov	r3, sp
+ 273 0052 DA71     		strb	r2, [r3, #7]
+ 274 0054 1DE0     		b	.L18
+ 275              	.L20:
+  42:.\SysClock.c  ****         {
+ 276              		.loc 1 42 0
+ 277 0056 6B46     		mov	r3, sp
+ 278 0058 0733     		add	r3, r3, #7
+ 279 005a 1B78     		ldrb	r3, [r3]
+ 280 005c DB00     		lsl	r3, r3, #3
+ 281 005e 114A     		ldr	r2, .L21
+ 282 0060 9B5C     		ldrb	r3, [r3, r2]
+ 283 0062 DBB2     		uxtb	r3, r3
+ 284 0064 FF2B     		cmp	r3, #255
+ 285 0066 0ED1     		bne	.L19
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 8
+
+
+  44:.\SysClock.c  ****             System_Timer[i].Time = New_Time;
+ 286              		.loc 1 44 0
+ 287 0068 6B46     		mov	r3, sp
+ 288 006a DA79     		ldrb	r2, [r3, #7]
+ 289 006c 0733     		add	r3, r3, #7
+ 290 006e 0D4C     		ldr	r4, .L21
+ 291 0070 D200     		lsl	r2, r2, #3
+ 292 0072 1055     		strb	r0, [r2, r4]
+  45:.\SysClock.c  ****             System_Timer_Flag[New_Number].Flag = 0;
+ 293              		.loc 1 45 0
+ 294 0074 1B78     		ldrb	r3, [r3]
+ 295 0076 DB00     		lsl	r3, r3, #3
+ 296 0078 E318     		add	r3, r4, r3
+ 297 007a 5960     		str	r1, [r3, #4]
+  46:.\SysClock.c  ****             CyGlobalIntEnable;
+ 298              		.loc 1 46 0
+ 299 007c 0022     		mov	r2, #0
+ 300 007e 0A4B     		ldr	r3, .L21+4
+ 301 0080 1A54     		strb	r2, [r3, r0]
+  47:.\SysClock.c  ****             return;
+ 302              		.loc 1 47 0
+ 303              	@ 47 ".\SysClock.c" 1
+ 304 0082 62B6     		CPSIE   i
+ 305              	@ 0 "" 2
+  48:.\SysClock.c  ****         }
+ 306              		.loc 1 48 0
+ 307              		.code	16
+ 308 0084 0CE0     		b	.L13
+ 309              	.L19:
+  40:.\SysClock.c  ****     {
+ 310              		.loc 1 40 0 discriminator 2
+ 311 0086 6B46     		mov	r3, sp
+ 312 0088 DA1D     		add	r2, r3, #7
+ 313 008a DB79     		ldrb	r3, [r3, #7]
+ 314 008c 0133     		add	r3, r3, #1
+ 315 008e DBB2     		uxtb	r3, r3
+ 316 0090 1370     		strb	r3, [r2]
+ 317              	.L18:
+  40:.\SysClock.c  ****     {
+ 318              		.loc 1 40 0 is_stmt 0 discriminator 1
+ 319 0092 6B46     		mov	r3, sp
+ 320 0094 0733     		add	r3, r3, #7
+ 321 0096 1B78     		ldrb	r3, [r3]
+ 322 0098 DBB2     		uxtb	r3, r3
+ 323 009a 042B     		cmp	r3, #4
+ 324 009c DBD9     		bls	.L20
+  51:.\SysClock.c  ****  }
+ 325              		.loc 1 51 0 is_stmt 1
+ 326              	@ 51 ".\SysClock.c" 1
+ 327 009e 62B6     		CPSIE   i
+ 328              	@ 0 "" 2
+ 329              		.code	16
+ 330              	.L13:
+  52:.\SysClock.c  **** 
+ 331              		.loc 1 52 0
+ 332 00a0 02B0     		add	sp, sp, #8
+ 333              		@ sp needed
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 9
+
+
+ 334 00a2 10BD     		pop	{r4, pc}
+ 335              	.L22:
+ 336              		.align	2
+ 337              	.L21:
+ 338 00a4 00000000 		.word	System_Timer
+ 339 00a8 00000000 		.word	System_Timer_Flag
+ 340              		.cfi_endproc
+ 341              	.LFE34:
+ 342              		.size	System_Timer_Add, .-System_Timer_Add
+ 343              		.section	.text.System_Timer_Remove,"ax",%progbits
+ 344              		.align	2
+ 345              		.global	System_Timer_Remove
+ 346              		.code	16
+ 347              		.thumb_func
+ 348              		.type	System_Timer_Remove, %function
+ 349              	System_Timer_Remove:
+ 350              	.LFB35:
+  55:.\SysClock.c  ****     CyGlobalIntDisable;
+ 351              		.loc 1 55 0
+ 352              		.cfi_startproc
+ 353              	.LVL3:
+ 354 0000 82B0     		sub	sp, sp, #8
+ 355              		.cfi_def_cfa_offset 8
+  56:.\SysClock.c  ****     volatile uint8 i;
+ 356              		.loc 1 56 0
+ 357              	@ 56 ".\SysClock.c" 1
+ 358 0002 72B6     		CPSID   i
+ 359              	@ 0 "" 2
+  58:.\SysClock.c  ****     {
+ 360              		.loc 1 58 0
+ 361              		.code	16
+ 362 0004 0022     		mov	r2, #0
+ 363 0006 6B46     		mov	r3, sp
+ 364 0008 DA71     		strb	r2, [r3, #7]
+ 365 000a 19E0     		b	.L24
+ 366              	.L27:
+  60:.\SysClock.c  ****         {
+ 367              		.loc 1 60 0
+ 368 000c 6B46     		mov	r3, sp
+ 369 000e 0733     		add	r3, r3, #7
+ 370 0010 1B78     		ldrb	r3, [r3]
+ 371 0012 DB00     		lsl	r3, r3, #3
+ 372 0014 0F4A     		ldr	r2, .L28
+ 373 0016 9B5C     		ldrb	r3, [r3, r2]
+ 374 0018 DBB2     		uxtb	r3, r3
+ 375 001a 8342     		cmp	r3, r0
+ 376 001c 0AD1     		bne	.L25
+  62:.\SysClock.c  ****             System_Timer_Flag[Number].Flag = 0;
+ 377              		.loc 1 62 0
+ 378 001e 6B46     		mov	r3, sp
+ 379 0020 0733     		add	r3, r3, #7
+ 380 0022 1B78     		ldrb	r3, [r3]
+ 381 0024 DB00     		lsl	r3, r3, #3
+ 382 0026 FF21     		mov	r1, #255
+ 383 0028 9954     		strb	r1, [r3, r2]
+  63:.\SysClock.c  ****             CyGlobalIntEnable;
+ 384              		.loc 1 63 0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 10
+
+
+ 385 002a 0022     		mov	r2, #0
+ 386 002c 0A4B     		ldr	r3, .L28+4
+ 387 002e 1A54     		strb	r2, [r3, r0]
+  64:.\SysClock.c  ****             break;
+ 388              		.loc 1 64 0
+ 389              	@ 64 ".\SysClock.c" 1
+ 390 0030 62B6     		CPSIE   i
+ 391              	@ 0 "" 2
+  65:.\SysClock.c  ****         }
+ 392              		.loc 1 65 0
+ 393              		.code	16
+ 394 0032 0BE0     		b	.L26
+ 395              	.L25:
+  58:.\SysClock.c  ****     {
+ 396              		.loc 1 58 0 discriminator 2
+ 397 0034 6B46     		mov	r3, sp
+ 398 0036 DA1D     		add	r2, r3, #7
+ 399 0038 DB79     		ldrb	r3, [r3, #7]
+ 400 003a 0133     		add	r3, r3, #1
+ 401 003c DBB2     		uxtb	r3, r3
+ 402 003e 1370     		strb	r3, [r2]
+ 403              	.L24:
+  58:.\SysClock.c  ****     {
+ 404              		.loc 1 58 0 is_stmt 0 discriminator 1
+ 405 0040 6B46     		mov	r3, sp
+ 406 0042 0733     		add	r3, r3, #7
+ 407 0044 1B78     		ldrb	r3, [r3]
+ 408 0046 DBB2     		uxtb	r3, r3
+ 409 0048 092B     		cmp	r3, #9
+ 410 004a DFD9     		bls	.L27
+ 411              	.L26:
+  68:.\SysClock.c  **** }
+ 412              		.loc 1 68 0 is_stmt 1
+ 413              	@ 68 ".\SysClock.c" 1
+ 414 004c 62B6     		CPSIE   i
+ 415              	@ 0 "" 2
+  69:.\SysClock.c  **** 
+ 416              		.loc 1 69 0
+ 417              		.code	16
+ 418 004e 02B0     		add	sp, sp, #8
+ 419              		@ sp needed
+ 420 0050 7047     		bx	lr
+ 421              	.L29:
+ 422 0052 C046     		.align	2
+ 423              	.L28:
+ 424 0054 00000000 		.word	System_Timer
+ 425 0058 00000000 		.word	System_Timer_Flag
+ 426              		.cfi_endproc
+ 427              	.LFE35:
+ 428              		.size	System_Timer_Remove, .-System_Timer_Remove
+ 429              		.comm	System_Timer,40,4
+ 430              		.comm	System_Timer_Flag,5,4
+ 431              		.text
+ 432              	.Letext0:
+ 433              		.file 2 "c:\\program files\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm
+ 434              		.file 3 "c:\\program files\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.3\\arm
+ 435              		.file 4 "Generated_Source\\PSoC4/cytypes.h"
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 11
+
+
+ 436              		.file 5 ".\\SysClock.h"
+ 437              		.file 6 "Generated_Source\\PSoC4/Timer.h"
+ 438              		.section	.debug_info,"",%progbits
+ 439              	.Ldebug_info0:
+ 440 0000 34020000 		.4byte	0x234
+ 441 0004 0400     		.2byte	0x4
+ 442 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 443 000a 04       		.byte	0x4
+ 444 000b 01       		.uleb128 0x1
+ 445 000c 8E010000 		.4byte	.LASF28
+ 446 0010 01       		.byte	0x1
+ 447 0011 2E000000 		.4byte	.LASF29
+ 448 0015 88000000 		.4byte	.LASF30
+ 449 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 450 001d 00000000 		.4byte	0
+ 451 0021 00000000 		.4byte	.Ldebug_line0
+ 452 0025 02       		.uleb128 0x2
+ 453 0026 01       		.byte	0x1
+ 454 0027 06       		.byte	0x6
+ 455 0028 3C020000 		.4byte	.LASF0
+ 456 002c 03       		.uleb128 0x3
+ 457 002d 1D000000 		.4byte	.LASF9
+ 458 0031 02       		.byte	0x2
+ 459 0032 1D       		.byte	0x1d
+ 460 0033 37000000 		.4byte	0x37
+ 461 0037 02       		.uleb128 0x2
+ 462 0038 01       		.byte	0x1
+ 463 0039 08       		.byte	0x8
+ 464 003a C4000000 		.4byte	.LASF1
+ 465 003e 02       		.uleb128 0x2
+ 466 003f 02       		.byte	0x2
+ 467 0040 05       		.byte	0x5
+ 468 0041 1C020000 		.4byte	.LASF2
+ 469 0045 02       		.uleb128 0x2
+ 470 0046 02       		.byte	0x2
+ 471 0047 07       		.byte	0x7
+ 472 0048 3B000000 		.4byte	.LASF3
+ 473 004c 02       		.uleb128 0x2
+ 474 004d 04       		.byte	0x4
+ 475 004e 05       		.byte	0x5
+ 476 004f 33020000 		.4byte	.LASF4
+ 477 0053 02       		.uleb128 0x2
+ 478 0054 04       		.byte	0x4
+ 479 0055 07       		.byte	0x7
+ 480 0056 D2000000 		.4byte	.LASF5
+ 481 005a 02       		.uleb128 0x2
+ 482 005b 08       		.byte	0x8
+ 483 005c 05       		.byte	0x5
+ 484 005d 76010000 		.4byte	.LASF6
+ 485 0061 02       		.uleb128 0x2
+ 486 0062 08       		.byte	0x8
+ 487 0063 07       		.byte	0x7
+ 488 0064 4E010000 		.4byte	.LASF7
+ 489 0068 04       		.uleb128 0x4
+ 490 0069 04       		.byte	0x4
+ 491 006a 05       		.byte	0x5
+ 492 006b 696E7400 		.ascii	"int\000"
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 12
+
+
+ 493 006f 02       		.uleb128 0x2
+ 494 0070 04       		.byte	0x4
+ 495 0071 07       		.byte	0x7
+ 496 0072 3A010000 		.4byte	.LASF8
+ 497 0076 03       		.uleb128 0x3
+ 498 0077 65010000 		.4byte	.LASF10
+ 499 007b 03       		.byte	0x3
+ 500 007c 15       		.byte	0x15
+ 501 007d 2C000000 		.4byte	0x2c
+ 502 0081 03       		.uleb128 0x3
+ 503 0082 E4000000 		.4byte	.LASF11
+ 504 0086 04       		.byte	0x4
+ 505 0087 C2       		.byte	0xc2
+ 506 0088 37000000 		.4byte	0x37
+ 507 008c 03       		.uleb128 0x3
+ 508 008d 16010000 		.4byte	.LASF12
+ 509 0091 04       		.byte	0x4
+ 510 0092 C4       		.byte	0xc4
+ 511 0093 53000000 		.4byte	0x53
+ 512 0097 02       		.uleb128 0x2
+ 513 0098 04       		.byte	0x4
+ 514 0099 04       		.byte	0x4
+ 515 009a 6A000000 		.4byte	.LASF13
+ 516 009e 02       		.uleb128 0x2
+ 517 009f 08       		.byte	0x8
+ 518 00a0 04       		.byte	0x4
+ 519 00a1 FD000000 		.4byte	.LASF14
+ 520 00a5 02       		.uleb128 0x2
+ 521 00a6 01       		.byte	0x1
+ 522 00a7 08       		.byte	0x8
+ 523 00a8 89010000 		.4byte	.LASF15
+ 524 00ac 05       		.uleb128 0x5
+ 525 00ad 81000000 		.4byte	0x81
+ 526 00b1 05       		.uleb128 0x5
+ 527 00b2 8C000000 		.4byte	0x8c
+ 528 00b6 02       		.uleb128 0x2
+ 529 00b7 04       		.byte	0x4
+ 530 00b8 07       		.byte	0x7
+ 531 00b9 6D010000 		.4byte	.LASF16
+ 532 00bd 06       		.uleb128 0x6
+ 533 00be 08       		.byte	0x8
+ 534 00bf 05       		.byte	0x5
+ 535 00c0 1B       		.byte	0x1b
+ 536 00c1 DE000000 		.4byte	0xde
+ 537 00c5 07       		.uleb128 0x7
+ 538 00c6 47010000 		.4byte	.LASF17
+ 539 00ca 05       		.byte	0x5
+ 540 00cb 1D       		.byte	0x1d
+ 541 00cc AC000000 		.4byte	0xac
+ 542 00d0 00       		.byte	0
+ 543 00d1 07       		.uleb128 0x7
+ 544 00d2 48020000 		.4byte	.LASF18
+ 545 00d6 05       		.byte	0x5
+ 546 00d7 1E       		.byte	0x1e
+ 547 00d8 B1000000 		.4byte	0xb1
+ 548 00dc 04       		.byte	0x4
+ 549 00dd 00       		.byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 13
+
+
+ 550 00de 08       		.uleb128 0x8
+ 551 00df BD000000 		.4byte	0xbd
+ 552 00e3 EE000000 		.4byte	0xee
+ 553 00e7 09       		.uleb128 0x9
+ 554 00e8 B6000000 		.4byte	0xb6
+ 555 00ec 04       		.byte	0x4
+ 556 00ed 00       		.byte	0
+ 557 00ee 06       		.uleb128 0x6
+ 558 00ef 01       		.byte	0x1
+ 559 00f0 05       		.byte	0x5
+ 560 00f1 20       		.byte	0x20
+ 561 00f2 03010000 		.4byte	0x103
+ 562 00f6 07       		.uleb128 0x7
+ 563 00f7 84010000 		.4byte	.LASF19
+ 564 00fb 05       		.byte	0x5
+ 565 00fc 22       		.byte	0x22
+ 566 00fd 81000000 		.4byte	0x81
+ 567 0101 00       		.byte	0
+ 568 0102 00       		.byte	0
+ 569 0103 08       		.uleb128 0x8
+ 570 0104 EE000000 		.4byte	0xee
+ 571 0108 13010000 		.4byte	0x113
+ 572 010c 09       		.uleb128 0x9
+ 573 010d B6000000 		.4byte	0xb6
+ 574 0111 04       		.byte	0x4
+ 575 0112 00       		.byte	0
+ 576 0113 0A       		.uleb128 0xa
+ 577 0114 59000000 		.4byte	.LASF21
+ 578 0118 01       		.byte	0x1
+ 579 0119 47       		.byte	0x47
+ 580 011a 00000000 		.4byte	.LFB36
+ 581 011e 84000000 		.4byte	.LFE36-.LFB36
+ 582 0122 01       		.uleb128 0x1
+ 583 0123 9C       		.byte	0x9c
+ 584 0124 35010000 		.4byte	0x135
+ 585 0128 0B       		.uleb128 0xb
+ 586 0129 6900     		.ascii	"i\000"
+ 587 012b 01       		.byte	0x1
+ 588 012c 4A       		.byte	0x4a
+ 589 012d AC000000 		.4byte	0xac
+ 590 0131 02       		.uleb128 0x2
+ 591 0132 91       		.byte	0x91
+ 592 0133 77       		.sleb128 -9
+ 593 0134 00       		.byte	0
+ 594 0135 0C       		.uleb128 0xc
+ 595 0136 EA000000 		.4byte	.LASF31
+ 596 013a 01       		.byte	0x1
+ 597 013b 0E       		.byte	0xe
+ 598 013c 00000000 		.4byte	.LFB33
+ 599 0140 5C000000 		.4byte	.LFE33-.LFB33
+ 600 0144 01       		.uleb128 0x1
+ 601 0145 9C       		.byte	0x9c
+ 602 0146 86010000 		.4byte	0x186
+ 603 014a 0D       		.uleb128 0xd
+ 604 014b 70000000 		.4byte	.LASF32
+ 605 014f 01       		.byte	0x1
+ 606 0150 11       		.byte	0x11
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 14
+
+
+ 607 0151 68000000 		.4byte	0x68
+ 608 0155 5B010000 		.4byte	0x15b
+ 609 0159 0E       		.uleb128 0xe
+ 610 015a 00       		.byte	0
+ 611 015b 0F       		.uleb128 0xf
+ 612 015c 27000000 		.4byte	.LASF20
+ 613 0160 01       		.byte	0x1
+ 614 0161 12       		.byte	0x12
+ 615 0162 86010000 		.4byte	0x186
+ 616 0166 02       		.uleb128 0x2
+ 617 0167 91       		.byte	0x91
+ 618 0168 77       		.sleb128 -9
+ 619 0169 10       		.uleb128 0x10
+ 620 016a 08000000 		.4byte	.LVL0
+ 621 016e 22020000 		.4byte	0x222
+ 622 0172 11       		.uleb128 0x11
+ 623 0173 0E000000 		.4byte	.LVL1
+ 624 0177 2A020000 		.4byte	0x22a
+ 625 017b 12       		.uleb128 0x12
+ 626 017c 01       		.uleb128 0x1
+ 627 017d 50       		.byte	0x50
+ 628 017e 05       		.uleb128 0x5
+ 629 017f 03       		.byte	0x3
+ 630 0180 00000000 		.4byte	System_Timer_ISR
+ 631 0184 00       		.byte	0
+ 632 0185 00       		.byte	0
+ 633 0186 05       		.uleb128 0x5
+ 634 0187 76000000 		.4byte	0x76
+ 635 018b 0A       		.uleb128 0xa
+ 636 018c 29010000 		.4byte	.LASF22
+ 637 0190 01       		.byte	0x1
+ 638 0191 1A       		.byte	0x1a
+ 639 0192 00000000 		.4byte	.LFB34
+ 640 0196 AC000000 		.4byte	.LFE34-.LFB34
+ 641 019a 01       		.uleb128 0x1
+ 642 019b 9C       		.byte	0x9c
+ 643 019c C7010000 		.4byte	0x1c7
+ 644 01a0 13       		.uleb128 0x13
+ 645 01a1 4E000000 		.4byte	.LASF23
+ 646 01a5 01       		.byte	0x1
+ 647 01a6 1A       		.byte	0x1a
+ 648 01a7 81000000 		.4byte	0x81
+ 649 01ab 01       		.uleb128 0x1
+ 650 01ac 50       		.byte	0x50
+ 651 01ad 13       		.uleb128 0x13
+ 652 01ae 14000000 		.4byte	.LASF24
+ 653 01b2 01       		.byte	0x1
+ 654 01b3 1A       		.byte	0x1a
+ 655 01b4 8C000000 		.4byte	0x8c
+ 656 01b8 01       		.uleb128 0x1
+ 657 01b9 51       		.byte	0x51
+ 658 01ba 0B       		.uleb128 0xb
+ 659 01bb 6900     		.ascii	"i\000"
+ 660 01bd 01       		.byte	0x1
+ 661 01be 1D       		.byte	0x1d
+ 662 01bf AC000000 		.4byte	0xac
+ 663 01c3 02       		.uleb128 0x2
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 15
+
+
+ 664 01c4 91       		.byte	0x91
+ 665 01c5 77       		.sleb128 -9
+ 666 01c6 00       		.byte	0
+ 667 01c7 0A       		.uleb128 0xa
+ 668 01c8 00000000 		.4byte	.LASF25
+ 669 01cc 01       		.byte	0x1
+ 670 01cd 36       		.byte	0x36
+ 671 01ce 00000000 		.4byte	.LFB35
+ 672 01d2 5C000000 		.4byte	.LFE35-.LFB35
+ 673 01d6 01       		.uleb128 0x1
+ 674 01d7 9C       		.byte	0x9c
+ 675 01d8 F6010000 		.4byte	0x1f6
+ 676 01dc 13       		.uleb128 0x13
+ 677 01dd 47010000 		.4byte	.LASF17
+ 678 01e1 01       		.byte	0x1
+ 679 01e2 36       		.byte	0x36
+ 680 01e3 81000000 		.4byte	0x81
+ 681 01e7 01       		.uleb128 0x1
+ 682 01e8 50       		.byte	0x50
+ 683 01e9 0B       		.uleb128 0xb
+ 684 01ea 6900     		.ascii	"i\000"
+ 685 01ec 01       		.byte	0x1
+ 686 01ed 39       		.byte	0x39
+ 687 01ee AC000000 		.4byte	0xac
+ 688 01f2 02       		.uleb128 0x2
+ 689 01f3 91       		.byte	0x91
+ 690 01f4 7F       		.sleb128 -1
+ 691 01f5 00       		.byte	0
+ 692 01f6 14       		.uleb128 0x14
+ 693 01f7 04010000 		.4byte	.LASF26
+ 694 01fb 05       		.byte	0x5
+ 695 01fc 25       		.byte	0x25
+ 696 01fd 07020000 		.4byte	0x207
+ 697 0201 05       		.uleb128 0x5
+ 698 0202 03       		.byte	0x3
+ 699 0203 00000000 		.4byte	System_Timer_Flag
+ 700 0207 05       		.uleb128 0x5
+ 701 0208 03010000 		.4byte	0x103
+ 702 020c 14       		.uleb128 0x14
+ 703 020d 26020000 		.4byte	.LASF27
+ 704 0211 05       		.byte	0x5
+ 705 0212 26       		.byte	0x26
+ 706 0213 1D020000 		.4byte	0x21d
+ 707 0217 05       		.uleb128 0x5
+ 708 0218 03       		.byte	0x3
+ 709 0219 00000000 		.4byte	System_Timer
+ 710 021d 05       		.uleb128 0x5
+ 711 021e DE000000 		.4byte	0xde
+ 712 0222 15       		.uleb128 0x15
+ 713 0223 1D010000 		.4byte	.LASF33
+ 714 0227 06       		.byte	0x6
+ 715 0228 3101     		.2byte	0x131
+ 716 022a 16       		.uleb128 0x16
+ 717 022b 70000000 		.4byte	.LASF32
+ 718 022f 01       		.byte	0x1
+ 719 0230 11       		.byte	0x11
+ 720 0231 68000000 		.4byte	0x68
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 16
+
+
+ 721 0235 0E       		.uleb128 0xe
+ 722 0236 00       		.byte	0
+ 723 0237 00       		.byte	0
+ 724              		.section	.debug_abbrev,"",%progbits
+ 725              	.Ldebug_abbrev0:
+ 726 0000 01       		.uleb128 0x1
+ 727 0001 11       		.uleb128 0x11
+ 728 0002 01       		.byte	0x1
+ 729 0003 25       		.uleb128 0x25
+ 730 0004 0E       		.uleb128 0xe
+ 731 0005 13       		.uleb128 0x13
+ 732 0006 0B       		.uleb128 0xb
+ 733 0007 03       		.uleb128 0x3
+ 734 0008 0E       		.uleb128 0xe
+ 735 0009 1B       		.uleb128 0x1b
+ 736 000a 0E       		.uleb128 0xe
+ 737 000b 55       		.uleb128 0x55
+ 738 000c 17       		.uleb128 0x17
+ 739 000d 11       		.uleb128 0x11
+ 740 000e 01       		.uleb128 0x1
+ 741 000f 10       		.uleb128 0x10
+ 742 0010 17       		.uleb128 0x17
+ 743 0011 00       		.byte	0
+ 744 0012 00       		.byte	0
+ 745 0013 02       		.uleb128 0x2
+ 746 0014 24       		.uleb128 0x24
+ 747 0015 00       		.byte	0
+ 748 0016 0B       		.uleb128 0xb
+ 749 0017 0B       		.uleb128 0xb
+ 750 0018 3E       		.uleb128 0x3e
+ 751 0019 0B       		.uleb128 0xb
+ 752 001a 03       		.uleb128 0x3
+ 753 001b 0E       		.uleb128 0xe
+ 754 001c 00       		.byte	0
+ 755 001d 00       		.byte	0
+ 756 001e 03       		.uleb128 0x3
+ 757 001f 16       		.uleb128 0x16
+ 758 0020 00       		.byte	0
+ 759 0021 03       		.uleb128 0x3
+ 760 0022 0E       		.uleb128 0xe
+ 761 0023 3A       		.uleb128 0x3a
+ 762 0024 0B       		.uleb128 0xb
+ 763 0025 3B       		.uleb128 0x3b
+ 764 0026 0B       		.uleb128 0xb
+ 765 0027 49       		.uleb128 0x49
+ 766 0028 13       		.uleb128 0x13
+ 767 0029 00       		.byte	0
+ 768 002a 00       		.byte	0
+ 769 002b 04       		.uleb128 0x4
+ 770 002c 24       		.uleb128 0x24
+ 771 002d 00       		.byte	0
+ 772 002e 0B       		.uleb128 0xb
+ 773 002f 0B       		.uleb128 0xb
+ 774 0030 3E       		.uleb128 0x3e
+ 775 0031 0B       		.uleb128 0xb
+ 776 0032 03       		.uleb128 0x3
+ 777 0033 08       		.uleb128 0x8
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 17
+
+
+ 778 0034 00       		.byte	0
+ 779 0035 00       		.byte	0
+ 780 0036 05       		.uleb128 0x5
+ 781 0037 35       		.uleb128 0x35
+ 782 0038 00       		.byte	0
+ 783 0039 49       		.uleb128 0x49
+ 784 003a 13       		.uleb128 0x13
+ 785 003b 00       		.byte	0
+ 786 003c 00       		.byte	0
+ 787 003d 06       		.uleb128 0x6
+ 788 003e 13       		.uleb128 0x13
+ 789 003f 01       		.byte	0x1
+ 790 0040 0B       		.uleb128 0xb
+ 791 0041 0B       		.uleb128 0xb
+ 792 0042 3A       		.uleb128 0x3a
+ 793 0043 0B       		.uleb128 0xb
+ 794 0044 3B       		.uleb128 0x3b
+ 795 0045 0B       		.uleb128 0xb
+ 796 0046 01       		.uleb128 0x1
+ 797 0047 13       		.uleb128 0x13
+ 798 0048 00       		.byte	0
+ 799 0049 00       		.byte	0
+ 800 004a 07       		.uleb128 0x7
+ 801 004b 0D       		.uleb128 0xd
+ 802 004c 00       		.byte	0
+ 803 004d 03       		.uleb128 0x3
+ 804 004e 0E       		.uleb128 0xe
+ 805 004f 3A       		.uleb128 0x3a
+ 806 0050 0B       		.uleb128 0xb
+ 807 0051 3B       		.uleb128 0x3b
+ 808 0052 0B       		.uleb128 0xb
+ 809 0053 49       		.uleb128 0x49
+ 810 0054 13       		.uleb128 0x13
+ 811 0055 38       		.uleb128 0x38
+ 812 0056 0B       		.uleb128 0xb
+ 813 0057 00       		.byte	0
+ 814 0058 00       		.byte	0
+ 815 0059 08       		.uleb128 0x8
+ 816 005a 01       		.uleb128 0x1
+ 817 005b 01       		.byte	0x1
+ 818 005c 49       		.uleb128 0x49
+ 819 005d 13       		.uleb128 0x13
+ 820 005e 01       		.uleb128 0x1
+ 821 005f 13       		.uleb128 0x13
+ 822 0060 00       		.byte	0
+ 823 0061 00       		.byte	0
+ 824 0062 09       		.uleb128 0x9
+ 825 0063 21       		.uleb128 0x21
+ 826 0064 00       		.byte	0
+ 827 0065 49       		.uleb128 0x49
+ 828 0066 13       		.uleb128 0x13
+ 829 0067 2F       		.uleb128 0x2f
+ 830 0068 0B       		.uleb128 0xb
+ 831 0069 00       		.byte	0
+ 832 006a 00       		.byte	0
+ 833 006b 0A       		.uleb128 0xa
+ 834 006c 2E       		.uleb128 0x2e
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 18
+
+
+ 835 006d 01       		.byte	0x1
+ 836 006e 3F       		.uleb128 0x3f
+ 837 006f 19       		.uleb128 0x19
+ 838 0070 03       		.uleb128 0x3
+ 839 0071 0E       		.uleb128 0xe
+ 840 0072 3A       		.uleb128 0x3a
+ 841 0073 0B       		.uleb128 0xb
+ 842 0074 3B       		.uleb128 0x3b
+ 843 0075 0B       		.uleb128 0xb
+ 844 0076 27       		.uleb128 0x27
+ 845 0077 19       		.uleb128 0x19
+ 846 0078 11       		.uleb128 0x11
+ 847 0079 01       		.uleb128 0x1
+ 848 007a 12       		.uleb128 0x12
+ 849 007b 06       		.uleb128 0x6
+ 850 007c 40       		.uleb128 0x40
+ 851 007d 18       		.uleb128 0x18
+ 852 007e 9742     		.uleb128 0x2117
+ 853 0080 19       		.uleb128 0x19
+ 854 0081 01       		.uleb128 0x1
+ 855 0082 13       		.uleb128 0x13
+ 856 0083 00       		.byte	0
+ 857 0084 00       		.byte	0
+ 858 0085 0B       		.uleb128 0xb
+ 859 0086 34       		.uleb128 0x34
+ 860 0087 00       		.byte	0
+ 861 0088 03       		.uleb128 0x3
+ 862 0089 08       		.uleb128 0x8
+ 863 008a 3A       		.uleb128 0x3a
+ 864 008b 0B       		.uleb128 0xb
+ 865 008c 3B       		.uleb128 0x3b
+ 866 008d 0B       		.uleb128 0xb
+ 867 008e 49       		.uleb128 0x49
+ 868 008f 13       		.uleb128 0x13
+ 869 0090 02       		.uleb128 0x2
+ 870 0091 18       		.uleb128 0x18
+ 871 0092 00       		.byte	0
+ 872 0093 00       		.byte	0
+ 873 0094 0C       		.uleb128 0xc
+ 874 0095 2E       		.uleb128 0x2e
+ 875 0096 01       		.byte	0x1
+ 876 0097 3F       		.uleb128 0x3f
+ 877 0098 19       		.uleb128 0x19
+ 878 0099 03       		.uleb128 0x3
+ 879 009a 0E       		.uleb128 0xe
+ 880 009b 3A       		.uleb128 0x3a
+ 881 009c 0B       		.uleb128 0xb
+ 882 009d 3B       		.uleb128 0x3b
+ 883 009e 0B       		.uleb128 0xb
+ 884 009f 11       		.uleb128 0x11
+ 885 00a0 01       		.uleb128 0x1
+ 886 00a1 12       		.uleb128 0x12
+ 887 00a2 06       		.uleb128 0x6
+ 888 00a3 40       		.uleb128 0x40
+ 889 00a4 18       		.uleb128 0x18
+ 890 00a5 9742     		.uleb128 0x2117
+ 891 00a7 19       		.uleb128 0x19
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 19
+
+
+ 892 00a8 01       		.uleb128 0x1
+ 893 00a9 13       		.uleb128 0x13
+ 894 00aa 00       		.byte	0
+ 895 00ab 00       		.byte	0
+ 896 00ac 0D       		.uleb128 0xd
+ 897 00ad 2E       		.uleb128 0x2e
+ 898 00ae 01       		.byte	0x1
+ 899 00af 3F       		.uleb128 0x3f
+ 900 00b0 19       		.uleb128 0x19
+ 901 00b1 03       		.uleb128 0x3
+ 902 00b2 0E       		.uleb128 0xe
+ 903 00b3 3A       		.uleb128 0x3a
+ 904 00b4 0B       		.uleb128 0xb
+ 905 00b5 3B       		.uleb128 0x3b
+ 906 00b6 0B       		.uleb128 0xb
+ 907 00b7 49       		.uleb128 0x49
+ 908 00b8 13       		.uleb128 0x13
+ 909 00b9 3C       		.uleb128 0x3c
+ 910 00ba 19       		.uleb128 0x19
+ 911 00bb 01       		.uleb128 0x1
+ 912 00bc 13       		.uleb128 0x13
+ 913 00bd 00       		.byte	0
+ 914 00be 00       		.byte	0
+ 915 00bf 0E       		.uleb128 0xe
+ 916 00c0 18       		.uleb128 0x18
+ 917 00c1 00       		.byte	0
+ 918 00c2 00       		.byte	0
+ 919 00c3 00       		.byte	0
+ 920 00c4 0F       		.uleb128 0xf
+ 921 00c5 34       		.uleb128 0x34
+ 922 00c6 00       		.byte	0
+ 923 00c7 03       		.uleb128 0x3
+ 924 00c8 0E       		.uleb128 0xe
+ 925 00c9 3A       		.uleb128 0x3a
+ 926 00ca 0B       		.uleb128 0xb
+ 927 00cb 3B       		.uleb128 0x3b
+ 928 00cc 0B       		.uleb128 0xb
+ 929 00cd 49       		.uleb128 0x49
+ 930 00ce 13       		.uleb128 0x13
+ 931 00cf 02       		.uleb128 0x2
+ 932 00d0 18       		.uleb128 0x18
+ 933 00d1 00       		.byte	0
+ 934 00d2 00       		.byte	0
+ 935 00d3 10       		.uleb128 0x10
+ 936 00d4 898201   		.uleb128 0x4109
+ 937 00d7 00       		.byte	0
+ 938 00d8 11       		.uleb128 0x11
+ 939 00d9 01       		.uleb128 0x1
+ 940 00da 31       		.uleb128 0x31
+ 941 00db 13       		.uleb128 0x13
+ 942 00dc 00       		.byte	0
+ 943 00dd 00       		.byte	0
+ 944 00de 11       		.uleb128 0x11
+ 945 00df 898201   		.uleb128 0x4109
+ 946 00e2 01       		.byte	0x1
+ 947 00e3 11       		.uleb128 0x11
+ 948 00e4 01       		.uleb128 0x1
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 20
+
+
+ 949 00e5 31       		.uleb128 0x31
+ 950 00e6 13       		.uleb128 0x13
+ 951 00e7 00       		.byte	0
+ 952 00e8 00       		.byte	0
+ 953 00e9 12       		.uleb128 0x12
+ 954 00ea 8A8201   		.uleb128 0x410a
+ 955 00ed 00       		.byte	0
+ 956 00ee 02       		.uleb128 0x2
+ 957 00ef 18       		.uleb128 0x18
+ 958 00f0 9142     		.uleb128 0x2111
+ 959 00f2 18       		.uleb128 0x18
+ 960 00f3 00       		.byte	0
+ 961 00f4 00       		.byte	0
+ 962 00f5 13       		.uleb128 0x13
+ 963 00f6 05       		.uleb128 0x5
+ 964 00f7 00       		.byte	0
+ 965 00f8 03       		.uleb128 0x3
+ 966 00f9 0E       		.uleb128 0xe
+ 967 00fa 3A       		.uleb128 0x3a
+ 968 00fb 0B       		.uleb128 0xb
+ 969 00fc 3B       		.uleb128 0x3b
+ 970 00fd 0B       		.uleb128 0xb
+ 971 00fe 49       		.uleb128 0x49
+ 972 00ff 13       		.uleb128 0x13
+ 973 0100 02       		.uleb128 0x2
+ 974 0101 18       		.uleb128 0x18
+ 975 0102 00       		.byte	0
+ 976 0103 00       		.byte	0
+ 977 0104 14       		.uleb128 0x14
+ 978 0105 34       		.uleb128 0x34
+ 979 0106 00       		.byte	0
+ 980 0107 03       		.uleb128 0x3
+ 981 0108 0E       		.uleb128 0xe
+ 982 0109 3A       		.uleb128 0x3a
+ 983 010a 0B       		.uleb128 0xb
+ 984 010b 3B       		.uleb128 0x3b
+ 985 010c 0B       		.uleb128 0xb
+ 986 010d 49       		.uleb128 0x49
+ 987 010e 13       		.uleb128 0x13
+ 988 010f 3F       		.uleb128 0x3f
+ 989 0110 19       		.uleb128 0x19
+ 990 0111 02       		.uleb128 0x2
+ 991 0112 18       		.uleb128 0x18
+ 992 0113 00       		.byte	0
+ 993 0114 00       		.byte	0
+ 994 0115 15       		.uleb128 0x15
+ 995 0116 2E       		.uleb128 0x2e
+ 996 0117 00       		.byte	0
+ 997 0118 3F       		.uleb128 0x3f
+ 998 0119 19       		.uleb128 0x19
+ 999 011a 03       		.uleb128 0x3
+ 1000 011b 0E       		.uleb128 0xe
+ 1001 011c 3A       		.uleb128 0x3a
+ 1002 011d 0B       		.uleb128 0xb
+ 1003 011e 3B       		.uleb128 0x3b
+ 1004 011f 05       		.uleb128 0x5
+ 1005 0120 27       		.uleb128 0x27
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 21
+
+
+ 1006 0121 19       		.uleb128 0x19
+ 1007 0122 3C       		.uleb128 0x3c
+ 1008 0123 19       		.uleb128 0x19
+ 1009 0124 00       		.byte	0
+ 1010 0125 00       		.byte	0
+ 1011 0126 16       		.uleb128 0x16
+ 1012 0127 2E       		.uleb128 0x2e
+ 1013 0128 01       		.byte	0x1
+ 1014 0129 3F       		.uleb128 0x3f
+ 1015 012a 19       		.uleb128 0x19
+ 1016 012b 03       		.uleb128 0x3
+ 1017 012c 0E       		.uleb128 0xe
+ 1018 012d 3A       		.uleb128 0x3a
+ 1019 012e 0B       		.uleb128 0xb
+ 1020 012f 3B       		.uleb128 0x3b
+ 1021 0130 0B       		.uleb128 0xb
+ 1022 0131 49       		.uleb128 0x49
+ 1023 0132 13       		.uleb128 0x13
+ 1024 0133 3C       		.uleb128 0x3c
+ 1025 0134 19       		.uleb128 0x19
+ 1026 0135 00       		.byte	0
+ 1027 0136 00       		.byte	0
+ 1028 0137 00       		.byte	0
+ 1029              		.section	.debug_aranges,"",%progbits
+ 1030 0000 34000000 		.4byte	0x34
+ 1031 0004 0200     		.2byte	0x2
+ 1032 0006 00000000 		.4byte	.Ldebug_info0
+ 1033 000a 04       		.byte	0x4
+ 1034 000b 00       		.byte	0
+ 1035 000c 0000     		.2byte	0
+ 1036 000e 0000     		.2byte	0
+ 1037 0010 00000000 		.4byte	.LFB36
+ 1038 0014 84000000 		.4byte	.LFE36-.LFB36
+ 1039 0018 00000000 		.4byte	.LFB33
+ 1040 001c 5C000000 		.4byte	.LFE33-.LFB33
+ 1041 0020 00000000 		.4byte	.LFB34
+ 1042 0024 AC000000 		.4byte	.LFE34-.LFB34
+ 1043 0028 00000000 		.4byte	.LFB35
+ 1044 002c 5C000000 		.4byte	.LFE35-.LFB35
+ 1045 0030 00000000 		.4byte	0
+ 1046 0034 00000000 		.4byte	0
+ 1047              		.section	.debug_ranges,"",%progbits
+ 1048              	.Ldebug_ranges0:
+ 1049 0000 00000000 		.4byte	.LFB36
+ 1050 0004 84000000 		.4byte	.LFE36
+ 1051 0008 00000000 		.4byte	.LFB33
+ 1052 000c 5C000000 		.4byte	.LFE33
+ 1053 0010 00000000 		.4byte	.LFB34
+ 1054 0014 AC000000 		.4byte	.LFE34
+ 1055 0018 00000000 		.4byte	.LFB35
+ 1056 001c 5C000000 		.4byte	.LFE35
+ 1057 0020 00000000 		.4byte	0
+ 1058 0024 00000000 		.4byte	0
+ 1059              		.section	.debug_line,"",%progbits
+ 1060              	.Ldebug_line0:
+ 1061 0000 13020000 		.section	.debug_str,"MS",%progbits,1
+ 1061      02004E01 
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 22
+
+
+ 1061      00000201 
+ 1061      FB0E0D00 
+ 1061      01010101 
+ 1062              	.LASF25:
+ 1063 0000 53797374 		.ascii	"System_Timer_Remove\000"
+ 1063      656D5F54 
+ 1063      696D6572 
+ 1063      5F52656D 
+ 1063      6F766500 
+ 1064              	.LASF24:
+ 1065 0014 4E65775F 		.ascii	"New_Time\000"
+ 1065      54696D65 
+ 1065      00
+ 1066              	.LASF9:
+ 1067 001d 5F5F7569 		.ascii	"__uint8_t\000"
+ 1067      6E74385F 
+ 1067      7400
+ 1068              	.LASF20:
+ 1069 0027 5363726F 		.ascii	"Scroll\000"
+ 1069      6C6C00
+ 1070              	.LASF29:
+ 1071 002e 2E5C5379 		.ascii	".\\SysClock.c\000"
+ 1071      73436C6F 
+ 1071      636B2E63 
+ 1071      00
+ 1072              	.LASF3:
+ 1073 003b 73686F72 		.ascii	"short unsigned int\000"
+ 1073      7420756E 
+ 1073      7369676E 
+ 1073      65642069 
+ 1073      6E7400
+ 1074              	.LASF23:
+ 1075 004e 4E65775F 		.ascii	"New_Number\000"
+ 1075      4E756D62 
+ 1075      657200
+ 1076              	.LASF21:
+ 1077 0059 53797374 		.ascii	"System_Timer_ISR\000"
+ 1077      656D5F54 
+ 1077      696D6572 
+ 1077      5F495352 
+ 1077      00
+ 1078              	.LASF13:
+ 1079 006a 666C6F61 		.ascii	"float\000"
+ 1079      7400
+ 1080              	.LASF32:
+ 1081 0070 54696D65 		.ascii	"Timer_Interrupt_StartEx\000"
+ 1081      725F496E 
+ 1081      74657272 
+ 1081      7570745F 
+ 1081      53746172 
+ 1082              	.LASF30:
+ 1083 0088 433A5C45 		.ascii	"C:\\EAGLE\\My\\WirellesLoad\\WirellesLoad\\Wirelles"
+ 1083      41474C45 
+ 1083      5C4D795C 
+ 1083      57697265 
+ 1083      6C6C6573 
+ 1084 00b6 4C6F6164 		.ascii	"Load_v1.cydsn\000"
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 23
+
+
+ 1084      5F76312E 
+ 1084      63796473 
+ 1084      6E00
+ 1085              	.LASF1:
+ 1086 00c4 756E7369 		.ascii	"unsigned char\000"
+ 1086      676E6564 
+ 1086      20636861 
+ 1086      7200
+ 1087              	.LASF5:
+ 1088 00d2 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1088      20756E73 
+ 1088      69676E65 
+ 1088      6420696E 
+ 1088      7400
+ 1089              	.LASF11:
+ 1090 00e4 75696E74 		.ascii	"uint8\000"
+ 1090      3800
+ 1091              	.LASF31:
+ 1092 00ea 53797374 		.ascii	"System_Timer_Start\000"
+ 1092      656D5F54 
+ 1092      696D6572 
+ 1092      5F537461 
+ 1092      727400
+ 1093              	.LASF14:
+ 1094 00fd 646F7562 		.ascii	"double\000"
+ 1094      6C6500
+ 1095              	.LASF26:
+ 1096 0104 53797374 		.ascii	"System_Timer_Flag\000"
+ 1096      656D5F54 
+ 1096      696D6572 
+ 1096      5F466C61 
+ 1096      6700
+ 1097              	.LASF12:
+ 1098 0116 75696E74 		.ascii	"uint32\000"
+ 1098      333200
+ 1099              	.LASF33:
+ 1100 011d 54696D65 		.ascii	"Timer_Start\000"
+ 1100      725F5374 
+ 1100      61727400 
+ 1101              	.LASF22:
+ 1102 0129 53797374 		.ascii	"System_Timer_Add\000"
+ 1102      656D5F54 
+ 1102      696D6572 
+ 1102      5F416464 
+ 1102      00
+ 1103              	.LASF8:
+ 1104 013a 756E7369 		.ascii	"unsigned int\000"
+ 1104      676E6564 
+ 1104      20696E74 
+ 1104      00
+ 1105              	.LASF17:
+ 1106 0147 4E756D62 		.ascii	"Number\000"
+ 1106      657200
+ 1107              	.LASF7:
+ 1108 014e 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1108      206C6F6E 
+ 1108      6720756E 
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 24
+
+
+ 1108      7369676E 
+ 1108      65642069 
+ 1109              	.LASF10:
+ 1110 0165 75696E74 		.ascii	"uint8_t\000"
+ 1110      385F7400 
+ 1111              	.LASF16:
+ 1112 016d 73697A65 		.ascii	"sizetype\000"
+ 1112      74797065 
+ 1112      00
+ 1113              	.LASF6:
+ 1114 0176 6C6F6E67 		.ascii	"long long int\000"
+ 1114      206C6F6E 
+ 1114      6720696E 
+ 1114      7400
+ 1115              	.LASF19:
+ 1116 0184 466C6167 		.ascii	"Flag\000"
+ 1116      00
+ 1117              	.LASF15:
+ 1118 0189 63686172 		.ascii	"char\000"
+ 1118      00
+ 1119              	.LASF28:
+ 1120 018e 474E5520 		.ascii	"GNU C 4.9.3 20150303 (release) [ARM/embedded-4_9-br"
+ 1120      4320342E 
+ 1120      392E3320 
+ 1120      32303135 
+ 1120      30333033 
+ 1121 01c1 616E6368 		.ascii	"anch revision 221220] -mcpu=cortex-m0 -mthumb -g -O"
+ 1121      20726576 
+ 1121      6973696F 
+ 1121      6E203232 
+ 1121      31323230 
+ 1122 01f4 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 1122      66756E63 
+ 1122      74696F6E 
+ 1122      2D736563 
+ 1122      74696F6E 
+ 1123              	.LASF2:
+ 1124 021c 73686F72 		.ascii	"short int\000"
+ 1124      7420696E 
+ 1124      7400
+ 1125              	.LASF27:
+ 1126 0226 53797374 		.ascii	"System_Timer\000"
+ 1126      656D5F54 
+ 1126      696D6572 
+ 1126      00
+ 1127              	.LASF4:
+ 1128 0233 6C6F6E67 		.ascii	"long int\000"
+ 1128      20696E74 
+ 1128      00
+ 1129              	.LASF0:
+ 1130 023c 7369676E 		.ascii	"signed char\000"
+ 1130      65642063 
+ 1130      68617200 
+ 1131              	.LASF18:
+ 1132 0248 54696D65 		.ascii	"Time\000"
+ 1132      00
+ 1133              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.9.3 20150303 (release) [ARM/embedded-4_9-br
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccaFuoBA.s 			page 25
+
+

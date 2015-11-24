@@ -199,6 +199,7 @@ static void ClockSetup(void)
 	/* CYDEV_CLK_SELECT00 Starting address: CYDEV_CLK_SELECT00 */
 	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_SELECT02), 0x00000010u);
 	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_SELECT03), 0x00000020u);
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_SELECT08), 0x00000030u);
 
 	/* CYDEV_CLK_IMO_CONFIG Starting address: CYDEV_CLK_IMO_CONFIG */
 	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_IMO_CONFIG), 0x80000000u);
@@ -208,6 +209,9 @@ static void ClockSetup(void)
 
 	/* CYDEV_CLK_DIVIDER_B00 Starting address: CYDEV_CLK_DIVIDER_B00 */
 	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_DIVIDER_B00), 0x8000000Eu);
+
+	/* CYDEV_CLK_DIVIDER_C00 Starting address: CYDEV_CLK_DIVIDER_C00 */
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_DIVIDER_C00), 0x80000017u);
 
 	(void)CyIntSetVector(9u, &CySysWdtIsr);
 	CyIntEnable(9u);
@@ -270,8 +274,8 @@ void cyfitter_cfg(void)
 			0x400F300Au, /* Base address: 0x400F3000 Count: 10 */
 			0x400F310Au, /* Base address: 0x400F3100 Count: 10 */
 			0x400F3305u, /* Base address: 0x400F3300 Count: 5 */
-			0x400F4004u, /* Base address: 0x400F4000 Count: 4 */
-			0x400F4104u, /* Base address: 0x400F4100 Count: 4 */
+			0x400F4006u, /* Base address: 0x400F4000 Count: 6 */
+			0x400F4107u, /* Base address: 0x400F4100 Count: 7 */
 			0x400F4208u, /* Base address: 0x400F4200 Count: 8 */
 			0x400F4308u, /* Base address: 0x400F4300 Count: 8 */
 			0x400F6002u, /* Base address: 0x400F6000 Count: 2 */
@@ -305,10 +309,15 @@ void cyfitter_cfg(void)
 			{0xEEu, 0x08u},
 			{0x0Eu, 0x10u},
 			{0x6Fu, 0x20u},
+			{0x73u, 0x08u},
 			{0xC2u, 0x20u},
 			{0xDAu, 0x80u},
+			{0xDCu, 0x20u},
+			{0x23u, 0x08u},
+			{0x9Fu, 0x08u},
 			{0xAAu, 0x10u},
 			{0xABu, 0x20u},
+			{0xC8u, 0x10u},
 			{0xE8u, 0x80u},
 			{0xEEu, 0x20u},
 			{0x00u, 0x40u},
@@ -372,7 +381,7 @@ void cyfitter_cfg(void)
 		CY_SET_XTND_REG32((void CYFAR *)(CYREG_UDB_PA3_CFG4), 0x88000000u);
 
 		/* INT_SELECT Starting address: CYDEV_CPUSS_INTR_SELECT */
-		CY_SET_XTND_REG32((void CYFAR *)(CYREG_CPUSS_INTR_SELECT), 0x00000001u);
+		CY_SET_XTND_REG32((void CYFAR *)(CYREG_CPUSS_INTR_SELECT), 0x00000005u);
 
 		/* INT_CONFIG Starting address: CYDEV_UDB_INT_CFG */
 		CY_SET_XTND_REG32((void CYFAR *)(CYREG_UDB_INT_CFG), 0x00000002u);

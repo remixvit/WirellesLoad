@@ -10,7 +10,7 @@
  * ========================================
 */
 #include <project.h>
-
+#include <MyLib.h>
 int main()
 {
     CyGlobalIntEnable; /* Enable global interrupts. */

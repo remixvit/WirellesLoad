@@ -1,0 +1,2316 @@
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 1
+
+
+   1              		.cpu cortex-m0
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 1
+  10              		.eabi_attribute 34, 0
+  11              		.eabi_attribute 18, 4
+  12              		.code	16
+  13              		.file	"TaskDispatcher.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.Idle,"ax",%progbits
+  18              		.align	2
+  19              		.global	Idle
+  20              		.code	16
+  21              		.thumb_func
+  22              		.type	Idle, %function
+  23              	Idle:
+  24              	.LFB38:
+  25              		.file 1 ".\\TaskDispatcher.c"
+   1:.\TaskDispatcher.c **** /* ========================================
+   2:.\TaskDispatcher.c ****  *
+   3:.\TaskDispatcher.c ****  * Copyright YOUR COMPANY, THE YEAR
+   4:.\TaskDispatcher.c ****  * All Rights Reserved
+   5:.\TaskDispatcher.c ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:.\TaskDispatcher.c ****  *
+   7:.\TaskDispatcher.c ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\TaskDispatcher.c ****  * WHICH IS THE PROPERTY OF your company.
+   9:.\TaskDispatcher.c ****  *
+  10:.\TaskDispatcher.c ****  * ========================================
+  11:.\TaskDispatcher.c **** */
+  12:.\TaskDispatcher.c **** 
+  13:.\TaskDispatcher.c **** #include "TaskDispatcher.h"
+  14:.\TaskDispatcher.c **** 
+  15:.\TaskDispatcher.c **** inline void TaskManager(void) //Диспетчер задач
+  16:.\TaskDispatcher.c **** {
+  17:.\TaskDispatcher.c ****     uint8      index=0;
+  18:.\TaskDispatcher.c ****     TPTR   GoToTask = Idle;      // Инициализируем переменные
+  19:.\TaskDispatcher.c ****  
+  20:.\TaskDispatcher.c ****         // Как видишь, тут есть указатель Idle - ведущий на пр�
+  21:.\TaskDispatcher.c ****         // На нее можно повесить что нибудь совсем фоновое,
+  22:.\TaskDispatcher.c ****         // И локальная переменная-указатель GoToTask куда мы б�
+  23:.\TaskDispatcher.c ****  
+  24:.\TaskDispatcher.c ****     CyGlobalIntDisable;
+  25:.\TaskDispatcher.c ****         // Запрещаем прерывания!!! Это макрос. Поэтому без ; 
+  26:.\TaskDispatcher.c ****         // Почему не CLI()? Это команда AVR, а я хотел сделать ма
+  27:.\TaskDispatcher.c ****         // платформонезависимый диспетчер. Прерывания над
+  28:.\TaskDispatcher.c ****         // Идет обращение к глобальной очереди диспетчера.
+  29:.\TaskDispatcher.c ****         // Поэтому заботимся об атомарности операции. 
+  30:.\TaskDispatcher.c ****  
+  31:.\TaskDispatcher.c ****     GoToTask = TaskQueue[0];	// Хватаем первое значение из очереди
+  32:.\TaskDispatcher.c ****  
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 2
+
+
+  33:.\TaskDispatcher.c ****     if (GoToTask==Idle)		// Если там пусто
+  34:.\TaskDispatcher.c **** 	{
+  35:.\TaskDispatcher.c **** 	    CyGlobalIntEnable;		// Разрешаем прерывания
+  36:.\TaskDispatcher.c **** 	    (Idle)();			// Переходим на обработку пустого цикла
+  37:.\TaskDispatcher.c ****     }
+  38:.\TaskDispatcher.c ****     else
+  39:.\TaskDispatcher.c ****    	{
+  40:.\TaskDispatcher.c ****        	for(index=0;index!=TaskQueueSize;index++)	// В противном случае сдвиг�
+  41:.\TaskDispatcher.c ****   		{
+  42:.\TaskDispatcher.c ****     		TaskQueue[index]=TaskQueue[index+1];
+  43:.\TaskDispatcher.c **** 		}
+  44:.\TaskDispatcher.c ****         TaskQueue[TaskQueueSize]= Idle;	// В последнюю запись пихаем заты
+  45:.\TaskDispatcher.c ****      
+  46:.\TaskDispatcher.c ****     	CyGlobalIntEnable;		// Разрешаем прерывания
+  47:.\TaskDispatcher.c ****     	(GoToTask)();		// Переходим к задаче
+  48:.\TaskDispatcher.c ****        	}
+  49:.\TaskDispatcher.c **** }
+  50:.\TaskDispatcher.c **** 
+  51:.\TaskDispatcher.c **** 
+  52:.\TaskDispatcher.c **** void SetTask(TPTR TS)
+  53:.\TaskDispatcher.c **** {
+  54:.\TaskDispatcher.c ****     uint8		index = 0;
+  55:.\TaskDispatcher.c ****     uint8   	nointerrupted = 0;
+  56:.\TaskDispatcher.c **** 
+  57:.\TaskDispatcher.c ****     	CyGlobalIntDisable;
+  58:.\TaskDispatcher.c ****     	nointerrupted = 1;					// И ставим флаг, что мы не в прерывании. 
+  59:.\TaskDispatcher.c ****     	
+  60:.\TaskDispatcher.c **** 
+  61:.\TaskDispatcher.c ****     while(TaskQueue[index]!=Idle) 			// Прочесываем очередь задач на пр�
+  62:.\TaskDispatcher.c ****     	{									// с значением Idle - конец очереди.
+  63:.\TaskDispatcher.c ****     	index++;
+  64:.\TaskDispatcher.c ****     	if (index==TaskQueueSize+1) 		// Если очередь переполнена то выхо�
+  65:.\TaskDispatcher.c ****     		{
+  66:.\TaskDispatcher.c ****     		if (nointerrupted)	CyGlobalIntEnable; 	// Если мы не в прерывании, то р
+  67:.\TaskDispatcher.c ****     		return;									// Раньше функция возвращала код ошибки - о�
+  68:.\TaskDispatcher.c ****     		}
+  69:.\TaskDispatcher.c ****     	}
+  70:.\TaskDispatcher.c ****     												// Если нашли свободное место, то
+  71:.\TaskDispatcher.c ****     TaskQueue[index] = TS;							// Записываем в очередь задачу
+  72:.\TaskDispatcher.c ****     if (nointerrupted) CyGlobalIntEnable;			// И включаем прерывания если н
+  73:.\TaskDispatcher.c **** }
+  74:.\TaskDispatcher.c **** 
+  75:.\TaskDispatcher.c **** //Функция установки задачи по таймеру. Передаваемые па
+  76:.\TaskDispatcher.c **** // Время выдержки в тиках системного таймера. Возвраще�
+  77:.\TaskDispatcher.c **** void SetTimerTask(TPTR TS, uint32 NewTime)
+  78:.\TaskDispatcher.c **** {
+  79:.\TaskDispatcher.c ****     uint8		index=0;
+  80:.\TaskDispatcher.c ****     uint8		nointerrupted = 0;
+  81:.\TaskDispatcher.c **** 
+  82:.\TaskDispatcher.c **** 	CyGlobalIntDisable;
+  83:.\TaskDispatcher.c **** 	nointerrupted = 1;
+  84:.\TaskDispatcher.c **** 	
+  85:.\TaskDispatcher.c ****     for(index=0;index!=MainTimerQueueSize+1;++index)	//Прочесываем очередь тай
+  86:.\TaskDispatcher.c ****     	{
+  87:.\TaskDispatcher.c ****     	    if(MainTimer[index].GoToTask == TS)				// Если уже есть запись с так�
+  88:.\TaskDispatcher.c ****     	    {
+  89:.\TaskDispatcher.c **** 		        MainTimer[index].Time = NewTime;			// Перезаписываем ей выдержку
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 3
+
+
+  90:.\TaskDispatcher.c **** 		        if (nointerrupted) 	CyGlobalIntEnable;		// Разрешаем прерывания есл
+  91:.\TaskDispatcher.c **** 		        return;										// Выходим. Раньше был код успешной опер�
+  92:.\TaskDispatcher.c ****             }
+  93:.\TaskDispatcher.c ****         }
+  94:.\TaskDispatcher.c **** 	
+  95:.\TaskDispatcher.c **** 
+  96:.\TaskDispatcher.c ****     for(index=0;index!=MainTimerQueueSize+1;++index)	// Если не находим похожий
+  97:.\TaskDispatcher.c **** 	{
+  98:.\TaskDispatcher.c ****     	if (MainTimer[index].GoToTask == Idle)		
+  99:.\TaskDispatcher.c ****     	{
+ 100:.\TaskDispatcher.c ****     		MainTimer[index].GoToTask = TS;			// Заполняем поле перехода задач�
+ 101:.\TaskDispatcher.c ****     		MainTimer[index].Time = NewTime;		// И поле выдержки времени
+ 102:.\TaskDispatcher.c ****     		if (nointerrupted) 	CyGlobalIntEnable;	// Разрешаем прерывания
+ 103:.\TaskDispatcher.c ****     		return;									// Выход. 
+ 104:.\TaskDispatcher.c ****     	}
+ 105:.\TaskDispatcher.c **** 		
+ 106:.\TaskDispatcher.c **** 	}												// тут можно сделать return c кодом ошибки - нет сво�
+ 107:.\TaskDispatcher.c **** }
+ 108:.\TaskDispatcher.c **** 
+ 109:.\TaskDispatcher.c **** 
+ 110:.\TaskDispatcher.c **** inline void InitRTOS(void)
+ 111:.\TaskDispatcher.c **** {
+ 112:.\TaskDispatcher.c ****     uint8	index;
+ 113:.\TaskDispatcher.c **** 
+ 114:.\TaskDispatcher.c ****     for(index=0;index!=TaskQueueSize+1;index++)	// Во все позиции записываем 
+ 115:.\TaskDispatcher.c ****     	{
+ 116:.\TaskDispatcher.c ****     	TaskQueue[index] = Idle;
+ 117:.\TaskDispatcher.c ****     	}
+ 118:.\TaskDispatcher.c **** 
+ 119:.\TaskDispatcher.c **** 
+ 120:.\TaskDispatcher.c ****     for(index=0;index!=MainTimerQueueSize+1;index++) // Обнуляем все таймеры.
+ 121:.\TaskDispatcher.c ****     	{
+ 122:.\TaskDispatcher.c ****     	MainTimer[index].GoToTask = Idle;
+ 123:.\TaskDispatcher.c ****     	MainTimer[index].Time = 0;
+ 124:.\TaskDispatcher.c ****     	}
+ 125:.\TaskDispatcher.c **** }
+ 126:.\TaskDispatcher.c **** 
+ 127:.\TaskDispatcher.c **** inline void RTOS_Start()
+ 128:.\TaskDispatcher.c **** {
+ 129:.\TaskDispatcher.c ****     InitRTOS();
+ 130:.\TaskDispatcher.c ****     Timer_RTOS_ISR_StartEx(TaskDispatcher_ISR);
+ 131:.\TaskDispatcher.c **** }
+ 132:.\TaskDispatcher.c **** 
+ 133:.\TaskDispatcher.c **** inline void  Idle(void)
+ 134:.\TaskDispatcher.c **** {
+  26              		.loc 1 134 0
+  27              		.cfi_startproc
+ 135:.\TaskDispatcher.c ****     
+ 136:.\TaskDispatcher.c **** }
+  28              		.loc 1 136 0
+  29              		@ sp needed
+  30 0000 7047     		bx	lr
+  31              		.cfi_endproc
+  32              	.LFE38:
+  33              		.size	Idle, .-Idle
+  34 0002 C046     		.section	.text.TaskManager,"ax",%progbits
+  35              		.align	2
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 4
+
+
+  36              		.global	TaskManager
+  37              		.code	16
+  38              		.thumb_func
+  39              		.type	TaskManager, %function
+  40              	TaskManager:
+  41              	.LFB33:
+  16:.\TaskDispatcher.c ****     uint8      index=0;
+  42              		.loc 1 16 0
+  43              		.cfi_startproc
+  44 0000 10B5     		push	{r4, lr}
+  45              		.cfi_def_cfa_offset 8
+  46              		.cfi_offset 4, -8
+  47              		.cfi_offset 14, -4
+  48              	.LVL0:
+  24:.\TaskDispatcher.c ****         // Запрещаем прерывания!!! Это макрос. Поэтому без ; 
+  49              		.loc 1 24 0
+  50              	@ 24 ".\TaskDispatcher.c" 1
+  51 0002 72B6     		CPSID   i
+  52              	@ 0 "" 2
+  31:.\TaskDispatcher.c ****  
+  53              		.loc 1 31 0
+  54              		.code	16
+  55 0004 0B4B     		ldr	r3, .L7
+  56 0006 1C68     		ldr	r4, [r3]
+  57              	.LVL1:
+  33:.\TaskDispatcher.c **** 	{
+  58              		.loc 1 33 0
+  59 0008 0B4B     		ldr	r3, .L7+4
+  60 000a 9C42     		cmp	r4, r3
+  61 000c 09D1     		bne	.L6
+  35:.\TaskDispatcher.c **** 	    (Idle)();			// Переходим на обработку пустого цикла
+  62              		.loc 1 35 0
+  63              	@ 35 ".\TaskDispatcher.c" 1
+  64 000e 62B6     		CPSIE   i
+  65              	@ 0 "" 2
+  66              		.code	16
+  67 0010 0FE0     		b	.L2
+  68              	.LVL2:
+  69              	.L5:
+  42:.\TaskDispatcher.c **** 		}
+  70              		.loc 1 42 0 discriminator 3
+  71 0012 5A1C     		add	r2, r3, #1
+  72 0014 0749     		ldr	r1, .L7
+  73 0016 9000     		lsl	r0, r2, #2
+  74 0018 4058     		ldr	r0, [r0, r1]
+  75 001a 9B00     		lsl	r3, r3, #2
+  76              	.LVL3:
+  77 001c 5850     		str	r0, [r3, r1]
+  40:.\TaskDispatcher.c ****   		{
+  78              		.loc 1 40 0 discriminator 3
+  79 001e D3B2     		uxtb	r3, r2
+  80              	.LVL4:
+  81 0020 00E0     		b	.L3
+  82              	.LVL5:
+  83              	.L6:
+  84 0022 0023     		mov	r3, #0
+  85              	.LVL6:
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 5
+
+
+  86              	.L3:
+  40:.\TaskDispatcher.c ****   		{
+  87              		.loc 1 40 0 is_stmt 0 discriminator 1
+  88 0024 0A2B     		cmp	r3, #10
+  89 0026 F4D1     		bne	.L5
+  44:.\TaskDispatcher.c ****      
+  90              		.loc 1 44 0 is_stmt 1
+  91 0028 034A     		ldr	r2, .L7+4
+  92 002a 024B     		ldr	r3, .L7
+  93              	.LVL7:
+  94 002c 9A62     		str	r2, [r3, #40]
+  46:.\TaskDispatcher.c ****     	(GoToTask)();		// Переходим к задаче
+  95              		.loc 1 46 0
+  96              	@ 46 ".\TaskDispatcher.c" 1
+  97 002e 62B6     		CPSIE   i
+  98              	@ 0 "" 2
+  47:.\TaskDispatcher.c ****        	}
+  99              		.loc 1 47 0
+ 100              		.code	16
+ 101 0030 A047     		blx	r4
+ 102              	.LVL8:
+ 103              	.L2:
+  49:.\TaskDispatcher.c **** 
+ 104              		.loc 1 49 0
+ 105              		@ sp needed
+ 106              	.LVL9:
+ 107 0032 10BD     		pop	{r4, pc}
+ 108              	.L8:
+ 109              		.align	2
+ 110              	.L7:
+ 111 0034 00000000 		.word	.LANCHOR0
+ 112 0038 00000000 		.word	Idle
+ 113              		.cfi_endproc
+ 114              	.LFE33:
+ 115              		.size	TaskManager, .-TaskManager
+ 116              		.section	.text.SetTask,"ax",%progbits
+ 117              		.align	2
+ 118              		.global	SetTask
+ 119              		.code	16
+ 120              		.thumb_func
+ 121              		.type	SetTask, %function
+ 122              	SetTask:
+ 123              	.LFB34:
+  53:.\TaskDispatcher.c ****     uint8		index = 0;
+ 124              		.loc 1 53 0
+ 125              		.cfi_startproc
+ 126              	.LVL10:
+ 127 0000 10B5     		push	{r4, lr}
+ 128              		.cfi_def_cfa_offset 8
+ 129              		.cfi_offset 4, -8
+ 130              		.cfi_offset 14, -4
+ 131              	.LVL11:
+  57:.\TaskDispatcher.c ****     	nointerrupted = 1;					// И ставим флаг, что мы не в прерывании. 
+ 132              		.loc 1 57 0
+ 133              	@ 57 ".\TaskDispatcher.c" 1
+ 134 0002 72B6     		CPSID   i
+ 135              	@ 0 "" 2
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 6
+
+
+ 136              	.LVL12:
+  54:.\TaskDispatcher.c ****     uint8   	nointerrupted = 0;
+ 137              		.loc 1 54 0
+ 138              		.code	16
+ 139 0004 0023     		mov	r3, #0
+  61:.\TaskDispatcher.c ****     	{									// с значением Idle - конец очереди.
+ 140              		.loc 1 61 0
+ 141 0006 05E0     		b	.L10
+ 142              	.LVL13:
+ 143              	.L12:
+  63:.\TaskDispatcher.c ****     	if (index==TaskQueueSize+1) 		// Если очередь переполнена то выхо�
+ 144              		.loc 1 63 0
+ 145 0008 0133     		add	r3, r3, #1
+ 146              	.LVL14:
+ 147 000a DBB2     		uxtb	r3, r3
+ 148              	.LVL15:
+  64:.\TaskDispatcher.c ****     		{
+ 149              		.loc 1 64 0
+ 150 000c 0B2B     		cmp	r3, #11
+ 151 000e 01D1     		bne	.L10
+  66:.\TaskDispatcher.c ****     		return;									// Раньше функция возвращала код ошибки - о�
+ 152              		.loc 1 66 0 discriminator 1
+ 153              	@ 66 ".\TaskDispatcher.c" 1
+ 154 0010 62B6     		CPSIE   i
+ 155              	@ 0 "" 2
+ 156              		.code	16
+ 157 0012 09E0     		b	.L9
+ 158              	.LVL16:
+ 159              	.L10:
+  61:.\TaskDispatcher.c ****     	{									// с значением Idle - конец очереди.
+ 160              		.loc 1 61 0
+ 161 0014 9A00     		lsl	r2, r3, #2
+ 162 0016 0549     		ldr	r1, .L13
+ 163 0018 5158     		ldr	r1, [r2, r1]
+ 164 001a 054A     		ldr	r2, .L13+4
+ 165 001c 9142     		cmp	r1, r2
+ 166 001e F3D1     		bne	.L12
+  71:.\TaskDispatcher.c ****     if (nointerrupted) CyGlobalIntEnable;			// И включаем прерывания если н
+ 167              		.loc 1 71 0
+ 168 0020 9C00     		lsl	r4, r3, #2
+ 169 0022 024B     		ldr	r3, .L13
+ 170              	.LVL17:
+ 171 0024 E050     		str	r0, [r4, r3]
+  72:.\TaskDispatcher.c **** }
+ 172              		.loc 1 72 0
+ 173              	@ 72 ".\TaskDispatcher.c" 1
+ 174 0026 62B6     		CPSIE   i
+ 175              	@ 0 "" 2
+ 176              		.code	16
+ 177              	.L9:
+  73:.\TaskDispatcher.c **** 
+ 178              		.loc 1 73 0
+ 179              		@ sp needed
+ 180 0028 10BD     		pop	{r4, pc}
+ 181              	.L14:
+ 182 002a C046     		.align	2
+ 183              	.L13:
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 7
+
+
+ 184 002c 00000000 		.word	.LANCHOR0
+ 185 0030 00000000 		.word	Idle
+ 186              		.cfi_endproc
+ 187              	.LFE34:
+ 188              		.size	SetTask, .-SetTask
+ 189              		.section	.text.TaskDispatcher_ISR,"ax",%progbits
+ 190              		.align	2
+ 191              		.global	TaskDispatcher_ISR
+ 192              		.code	16
+ 193              		.thumb_func
+ 194              		.type	TaskDispatcher_ISR, %function
+ 195              	TaskDispatcher_ISR:
+ 196              	.LFB40:
+ 137:.\TaskDispatcher.c **** 
+ 138:.\TaskDispatcher.c **** /*
+ 139:.\TaskDispatcher.c **** Служба таймеров ядра. Должна вызываться из прерывания
+ 140:.\TaskDispatcher.c **** 
+ 141:.\TaskDispatcher.c **** To DO: Привести к возможности загружать произвольную оч�
+ 142:.\TaskDispatcher.c **** А также использовать эту функцию произвольным образо�
+ 143:.\TaskDispatcher.c **** В этом случае не забыть добавить проверку прерывания. 
+ 144:.\TaskDispatcher.c **** */
+ 145:.\TaskDispatcher.c **** inline void TimerService(void)
+ 146:.\TaskDispatcher.c **** {
+ 147:.\TaskDispatcher.c ****     uint8 index;
+ 148:.\TaskDispatcher.c **** 
+ 149:.\TaskDispatcher.c ****     for(index=0;index!=MainTimerQueueSize+1;index++)		// Прочесываем очередь та
+ 150:.\TaskDispatcher.c ****     	{
+ 151:.\TaskDispatcher.c ****     	if(MainTimer[index].GoToTask == Idle) continue;		// Если нашли пустышку - щ�
+ 152:.\TaskDispatcher.c **** 
+ 153:.\TaskDispatcher.c ****     	if(MainTimer[index].Time !=1)						// Если таймер не выщелкал, то щел
+ 154:.\TaskDispatcher.c ****     		{												// To Do: Вычислить по тактам, что лучше !=1 или !=0
+ 155:.\TaskDispatcher.c ****     		MainTimer[index].Time --;						// Уменьшаем число в ячейке если не
+ 156:.\TaskDispatcher.c ****     		}
+ 157:.\TaskDispatcher.c ****     	else
+ 158:.\TaskDispatcher.c ****     		{
+ 159:.\TaskDispatcher.c ****     		SetTask(MainTimer[index].GoToTask);				// Дощелкали до нуля? Пихаем в �
+ 160:.\TaskDispatcher.c ****     		MainTimer[index].GoToTask = Idle;				// А в ячейку пишем затычку
+ 161:.\TaskDispatcher.c ****     		}
+ 162:.\TaskDispatcher.c ****     	}
+ 163:.\TaskDispatcher.c **** }
+ 164:.\TaskDispatcher.c **** 
+ 165:.\TaskDispatcher.c **** 
+ 166:.\TaskDispatcher.c **** 
+ 167:.\TaskDispatcher.c **** CY_ISR(TaskDispatcher_ISR)
+ 168:.\TaskDispatcher.c **** {
+ 197              		.loc 1 168 0
+ 198              		.cfi_startproc
+ 199 0000 38B5     		push	{r3, r4, r5, lr}
+ 200              		.cfi_def_cfa_offset 16
+ 201              		.cfi_offset 3, -16
+ 202              		.cfi_offset 4, -12
+ 203              		.cfi_offset 5, -8
+ 204              		.cfi_offset 14, -4
+ 205              	.LVL18:
+ 206              	.LBB8:
+ 207              	.LBB9:
+ 149:.\TaskDispatcher.c ****     	{
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 8
+
+
+ 208              		.loc 1 149 0
+ 209 0002 0024     		mov	r4, #0
+ 210 0004 1DE0     		b	.L16
+ 211              	.LVL19:
+ 212              	.L19:
+ 151:.\TaskDispatcher.c **** 
+ 213              		.loc 1 151 0
+ 214 0006 E300     		lsl	r3, r4, #3
+ 215 0008 0F49     		ldr	r1, .L20
+ 216 000a CB18     		add	r3, r1, r3
+ 217 000c D96A     		ldr	r1, [r3, #44]
+ 218 000e 0F4B     		ldr	r3, .L20+4
+ 219 0010 9942     		cmp	r1, r3
+ 220 0012 14D0     		beq	.L17
+ 153:.\TaskDispatcher.c ****     		{												// To Do: Вычислить по тактам, что лучше !=1 или !=0
+ 221              		.loc 1 153 0
+ 222 0014 E300     		lsl	r3, r4, #3
+ 223 0016 0C49     		ldr	r1, .L20
+ 224 0018 CB18     		add	r3, r1, r3
+ 225 001a 2C33     		add	r3, r3, #44
+ 226 001c 5B68     		ldr	r3, [r3, #4]
+ 227 001e 012B     		cmp	r3, #1
+ 228 0020 05D0     		beq	.L18
+ 155:.\TaskDispatcher.c ****     		}
+ 229              		.loc 1 155 0
+ 230 0022 E200     		lsl	r2, r4, #3
+ 231 0024 8B18     		add	r3, r1, r2
+ 232 0026 1A6B     		ldr	r2, [r3, #48]
+ 233 0028 013A     		sub	r2, r2, #1
+ 234 002a 1A63     		str	r2, [r3, #48]
+ 235 002c 07E0     		b	.L17
+ 236              	.L18:
+ 159:.\TaskDispatcher.c ****     		MainTimer[index].GoToTask = Idle;				// А в ячейку пишем затычку
+ 237              		.loc 1 159 0
+ 238 002e E200     		lsl	r2, r4, #3
+ 239 0030 054D     		ldr	r5, .L20
+ 240 0032 AD18     		add	r5, r5, r2
+ 241 0034 E86A     		ldr	r0, [r5, #44]
+ 242 0036 FFF7FEFF 		bl	SetTask
+ 243              	.LVL20:
+ 160:.\TaskDispatcher.c ****     		}
+ 244              		.loc 1 160 0
+ 245 003a 044B     		ldr	r3, .L20+4
+ 246 003c EB62     		str	r3, [r5, #44]
+ 247              	.L17:
+ 149:.\TaskDispatcher.c ****     	{
+ 248              		.loc 1 149 0
+ 249 003e 0134     		add	r4, r4, #1
+ 250              	.LVL21:
+ 251 0040 E4B2     		uxtb	r4, r4
+ 252              	.LVL22:
+ 253              	.L16:
+ 254 0042 152C     		cmp	r4, #21
+ 255 0044 DFD1     		bne	.L19
+ 256              	.LBE9:
+ 257              	.LBE8:
+ 169:.\TaskDispatcher.c ****     TimerService();
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 9
+
+
+ 170:.\TaskDispatcher.c ****     //RTC_Update();
+ 171:.\TaskDispatcher.c **** }
+ 258              		.loc 1 171 0
+ 259              		@ sp needed
+ 260              	.LVL23:
+ 261 0046 38BD     		pop	{r3, r4, r5, pc}
+ 262              	.L21:
+ 263              		.align	2
+ 264              	.L20:
+ 265 0048 00000000 		.word	.LANCHOR0
+ 266 004c 00000000 		.word	Idle
+ 267              		.cfi_endproc
+ 268              	.LFE40:
+ 269              		.size	TaskDispatcher_ISR, .-TaskDispatcher_ISR
+ 270              		.section	.text.SetTimerTask,"ax",%progbits
+ 271              		.align	2
+ 272              		.global	SetTimerTask
+ 273              		.code	16
+ 274              		.thumb_func
+ 275              		.type	SetTimerTask, %function
+ 276              	SetTimerTask:
+ 277              	.LFB35:
+  78:.\TaskDispatcher.c ****     uint8		index=0;
+ 278              		.loc 1 78 0
+ 279              		.cfi_startproc
+ 280              	.LVL24:
+ 281 0000 30B5     		push	{r4, r5, lr}
+ 282              		.cfi_def_cfa_offset 12
+ 283              		.cfi_offset 4, -12
+ 284              		.cfi_offset 5, -8
+ 285              		.cfi_offset 14, -4
+ 286              	.LVL25:
+  82:.\TaskDispatcher.c **** 	nointerrupted = 1;
+ 287              		.loc 1 82 0
+ 288              	@ 82 ".\TaskDispatcher.c" 1
+ 289 0002 72B6     		CPSID   i
+ 290              	@ 0 "" 2
+ 291              	.LVL26:
+  85:.\TaskDispatcher.c ****     	{
+ 292              		.loc 1 85 0
+ 293              		.code	16
+ 294 0004 0023     		mov	r3, #0
+ 295 0006 0CE0     		b	.L23
+ 296              	.LVL27:
+ 297              	.L26:
+  87:.\TaskDispatcher.c ****     	    {
+ 298              		.loc 1 87 0
+ 299 0008 DA00     		lsl	r2, r3, #3
+ 300 000a 114D     		ldr	r5, .L30
+ 301 000c AA18     		add	r2, r5, r2
+ 302 000e D26A     		ldr	r2, [r2, #44]
+ 303 0010 8242     		cmp	r2, r0
+ 304 0012 04D1     		bne	.L24
+  89:.\TaskDispatcher.c **** 		        if (nointerrupted) 	CyGlobalIntEnable;		// Разрешаем прерывания есл
+ 305              		.loc 1 89 0
+ 306 0014 DC00     		lsl	r4, r3, #3
+ 307 0016 2C19     		add	r4, r5, r4
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 10
+
+
+ 308 0018 2163     		str	r1, [r4, #48]
+  90:.\TaskDispatcher.c **** 		        return;										// Выходим. Раньше был код успешной опер�
+ 309              		.loc 1 90 0
+ 310              	@ 90 ".\TaskDispatcher.c" 1
+ 311 001a 62B6     		CPSIE   i
+ 312              	@ 0 "" 2
+ 313              		.code	16
+ 314 001c 17E0     		b	.L22
+ 315              	.L24:
+  85:.\TaskDispatcher.c ****     	{
+ 316              		.loc 1 85 0 discriminator 2
+ 317 001e 0133     		add	r3, r3, #1
+ 318              	.LVL28:
+ 319 0020 DBB2     		uxtb	r3, r3
+ 320              	.LVL29:
+ 321              	.L23:
+  85:.\TaskDispatcher.c ****     	{
+ 322              		.loc 1 85 0 is_stmt 0 discriminator 1
+ 323 0022 152B     		cmp	r3, #21
+ 324 0024 F0D1     		bne	.L26
+ 325 0026 0023     		mov	r3, #0
+ 326              	.LVL30:
+ 327 0028 0FE0     		b	.L27
+ 328              	.LVL31:
+ 329              	.L29:
+  98:.\TaskDispatcher.c ****     	{
+ 330              		.loc 1 98 0 is_stmt 1
+ 331 002a DA00     		lsl	r2, r3, #3
+ 332 002c 084D     		ldr	r5, .L30
+ 333 002e AA18     		add	r2, r5, r2
+ 334 0030 D56A     		ldr	r5, [r2, #44]
+ 335 0032 084A     		ldr	r2, .L30+4
+ 336 0034 9542     		cmp	r5, r2
+ 337 0036 06D1     		bne	.L28
+ 100:.\TaskDispatcher.c ****     		MainTimer[index].Time = NewTime;		// И поле выдержки времени
+ 338              		.loc 1 100 0
+ 339 0038 DC00     		lsl	r4, r3, #3
+ 340 003a 054B     		ldr	r3, .L30
+ 341              	.LVL32:
+ 342 003c 1C19     		add	r4, r3, r4
+ 343 003e E062     		str	r0, [r4, #44]
+ 101:.\TaskDispatcher.c ****     		if (nointerrupted) 	CyGlobalIntEnable;	// Разрешаем прерывания
+ 344              		.loc 1 101 0
+ 345 0040 2163     		str	r1, [r4, #48]
+ 102:.\TaskDispatcher.c ****     		return;									// Выход. 
+ 346              		.loc 1 102 0
+ 347              	@ 102 ".\TaskDispatcher.c" 1
+ 348 0042 62B6     		CPSIE   i
+ 349              	@ 0 "" 2
+ 350              		.code	16
+ 351 0044 03E0     		b	.L22
+ 352              	.LVL33:
+ 353              	.L28:
+  96:.\TaskDispatcher.c **** 	{
+ 354              		.loc 1 96 0 discriminator 2
+ 355 0046 0133     		add	r3, r3, #1
+ 356              	.LVL34:
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 11
+
+
+ 357 0048 DBB2     		uxtb	r3, r3
+ 358              	.LVL35:
+ 359              	.L27:
+  96:.\TaskDispatcher.c **** 	{
+ 360              		.loc 1 96 0 is_stmt 0 discriminator 1
+ 361 004a 152B     		cmp	r3, #21
+ 362 004c EDD1     		bne	.L29
+ 363              	.LVL36:
+ 364              	.L22:
+ 107:.\TaskDispatcher.c **** 
+ 365              		.loc 1 107 0 is_stmt 1
+ 366              		@ sp needed
+ 367 004e 30BD     		pop	{r4, r5, pc}
+ 368              	.L31:
+ 369              		.align	2
+ 370              	.L30:
+ 371 0050 00000000 		.word	.LANCHOR0
+ 372 0054 00000000 		.word	Idle
+ 373              		.cfi_endproc
+ 374              	.LFE35:
+ 375              		.size	SetTimerTask, .-SetTimerTask
+ 376              		.section	.text.InitRTOS,"ax",%progbits
+ 377              		.align	2
+ 378              		.global	InitRTOS
+ 379              		.code	16
+ 380              		.thumb_func
+ 381              		.type	InitRTOS, %function
+ 382              	InitRTOS:
+ 383              	.LFB36:
+ 111:.\TaskDispatcher.c ****     uint8	index;
+ 384              		.loc 1 111 0
+ 385              		.cfi_startproc
+ 386              	.LVL37:
+ 114:.\TaskDispatcher.c ****     	{
+ 387              		.loc 1 114 0
+ 388 0000 0023     		mov	r3, #0
+ 389 0002 05E0     		b	.L33
+ 390              	.LVL38:
+ 391              	.L34:
+ 116:.\TaskDispatcher.c ****     	}
+ 392              		.loc 1 116 0 discriminator 3
+ 393 0004 9900     		lsl	r1, r3, #2
+ 394 0006 0B48     		ldr	r0, .L37
+ 395 0008 0B4A     		ldr	r2, .L37+4
+ 396 000a 8850     		str	r0, [r1, r2]
+ 114:.\TaskDispatcher.c ****     	{
+ 397              		.loc 1 114 0 discriminator 3
+ 398 000c 0133     		add	r3, r3, #1
+ 399              	.LVL39:
+ 400 000e DBB2     		uxtb	r3, r3
+ 401              	.LVL40:
+ 402              	.L33:
+ 114:.\TaskDispatcher.c ****     	{
+ 403              		.loc 1 114 0 is_stmt 0 discriminator 1
+ 404 0010 0B2B     		cmp	r3, #11
+ 405 0012 F7D1     		bne	.L34
+ 406 0014 0023     		mov	r3, #0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 12
+
+
+ 407              	.LVL41:
+ 408 0016 09E0     		b	.L35
+ 409              	.LVL42:
+ 410              	.L36:
+ 122:.\TaskDispatcher.c ****     	MainTimer[index].Time = 0;
+ 411              		.loc 1 122 0 is_stmt 1 discriminator 3
+ 412 0018 DA00     		lsl	r2, r3, #3
+ 413 001a 0749     		ldr	r1, .L37+4
+ 414 001c 8A18     		add	r2, r1, r2
+ 415 001e 111C     		mov	r1, r2
+ 416 0020 0448     		ldr	r0, .L37
+ 417 0022 D062     		str	r0, [r2, #44]
+ 123:.\TaskDispatcher.c ****     	}
+ 418              		.loc 1 123 0 discriminator 3
+ 419 0024 0022     		mov	r2, #0
+ 420 0026 0A63     		str	r2, [r1, #48]
+ 120:.\TaskDispatcher.c ****     	{
+ 421              		.loc 1 120 0 discriminator 3
+ 422 0028 0133     		add	r3, r3, #1
+ 423              	.LVL43:
+ 424 002a DBB2     		uxtb	r3, r3
+ 425              	.LVL44:
+ 426              	.L35:
+ 120:.\TaskDispatcher.c ****     	{
+ 427              		.loc 1 120 0 is_stmt 0 discriminator 1
+ 428 002c 152B     		cmp	r3, #21
+ 429 002e F3D1     		bne	.L36
+ 125:.\TaskDispatcher.c **** 
+ 430              		.loc 1 125 0 is_stmt 1
+ 431              		@ sp needed
+ 432 0030 7047     		bx	lr
+ 433              	.L38:
+ 434 0032 C046     		.align	2
+ 435              	.L37:
+ 436 0034 00000000 		.word	Idle
+ 437 0038 00000000 		.word	.LANCHOR0
+ 438              		.cfi_endproc
+ 439              	.LFE36:
+ 440              		.size	InitRTOS, .-InitRTOS
+ 441              		.section	.text.RTOS_Start,"ax",%progbits
+ 442              		.align	2
+ 443              		.global	RTOS_Start
+ 444              		.code	16
+ 445              		.thumb_func
+ 446              		.type	RTOS_Start, %function
+ 447              	RTOS_Start:
+ 448              	.LFB37:
+ 128:.\TaskDispatcher.c ****     InitRTOS();
+ 449              		.loc 1 128 0
+ 450              		.cfi_startproc
+ 451 0000 08B5     		push	{r3, lr}
+ 452              		.cfi_def_cfa_offset 8
+ 453              		.cfi_offset 3, -8
+ 454              		.cfi_offset 14, -4
+ 455              	.LVL45:
+ 456              	.LBB10:
+ 457              	.LBB11:
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 13
+
+
+ 114:.\TaskDispatcher.c ****     	{
+ 458              		.loc 1 114 0
+ 459 0002 0023     		mov	r3, #0
+ 460 0004 05E0     		b	.L40
+ 461              	.LVL46:
+ 462              	.L41:
+ 116:.\TaskDispatcher.c ****     	}
+ 463              		.loc 1 116 0
+ 464 0006 9900     		lsl	r1, r3, #2
+ 465 0008 0C48     		ldr	r0, .L44
+ 466 000a 0D4A     		ldr	r2, .L44+4
+ 467 000c 8850     		str	r0, [r1, r2]
+ 114:.\TaskDispatcher.c ****     	{
+ 468              		.loc 1 114 0
+ 469 000e 0133     		add	r3, r3, #1
+ 470              	.LVL47:
+ 471 0010 DBB2     		uxtb	r3, r3
+ 472              	.LVL48:
+ 473              	.L40:
+ 474 0012 0B2B     		cmp	r3, #11
+ 475 0014 F7D1     		bne	.L41
+ 476 0016 0023     		mov	r3, #0
+ 477              	.LVL49:
+ 478 0018 09E0     		b	.L42
+ 479              	.LVL50:
+ 480              	.L43:
+ 122:.\TaskDispatcher.c ****     	MainTimer[index].Time = 0;
+ 481              		.loc 1 122 0
+ 482 001a DA00     		lsl	r2, r3, #3
+ 483 001c 0849     		ldr	r1, .L44+4
+ 484 001e 8A18     		add	r2, r1, r2
+ 485 0020 111C     		mov	r1, r2
+ 486 0022 0648     		ldr	r0, .L44
+ 487 0024 D062     		str	r0, [r2, #44]
+ 123:.\TaskDispatcher.c ****     	}
+ 488              		.loc 1 123 0
+ 489 0026 0022     		mov	r2, #0
+ 490 0028 0A63     		str	r2, [r1, #48]
+ 120:.\TaskDispatcher.c ****     	{
+ 491              		.loc 1 120 0
+ 492 002a 0133     		add	r3, r3, #1
+ 493              	.LVL51:
+ 494 002c DBB2     		uxtb	r3, r3
+ 495              	.LVL52:
+ 496              	.L42:
+ 497 002e 152B     		cmp	r3, #21
+ 498 0030 F3D1     		bne	.L43
+ 499              	.LBE11:
+ 500              	.LBE10:
+ 130:.\TaskDispatcher.c **** }
+ 501              		.loc 1 130 0
+ 502 0032 0448     		ldr	r0, .L44+8
+ 503 0034 FFF7FEFF 		bl	Timer_RTOS_ISR_StartEx
+ 504              	.LVL53:
+ 131:.\TaskDispatcher.c **** 
+ 505              		.loc 1 131 0
+ 506              		@ sp needed
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 14
+
+
+ 507 0038 08BD     		pop	{r3, pc}
+ 508              	.L45:
+ 509 003a C046     		.align	2
+ 510              	.L44:
+ 511 003c 00000000 		.word	Idle
+ 512 0040 00000000 		.word	.LANCHOR0
+ 513 0044 00000000 		.word	TaskDispatcher_ISR
+ 514              		.cfi_endproc
+ 515              	.LFE37:
+ 516              		.size	RTOS_Start, .-RTOS_Start
+ 517              		.section	.text.TimerService,"ax",%progbits
+ 518              		.align	2
+ 519              		.global	TimerService
+ 520              		.code	16
+ 521              		.thumb_func
+ 522              		.type	TimerService, %function
+ 523              	TimerService:
+ 524              	.LFB39:
+ 146:.\TaskDispatcher.c ****     uint8 index;
+ 525              		.loc 1 146 0
+ 526              		.cfi_startproc
+ 527 0000 38B5     		push	{r3, r4, r5, lr}
+ 528              		.cfi_def_cfa_offset 16
+ 529              		.cfi_offset 3, -16
+ 530              		.cfi_offset 4, -12
+ 531              		.cfi_offset 5, -8
+ 532              		.cfi_offset 14, -4
+ 533              	.LVL54:
+ 149:.\TaskDispatcher.c ****     	{
+ 534              		.loc 1 149 0
+ 535 0002 0024     		mov	r4, #0
+ 536 0004 1DE0     		b	.L47
+ 537              	.LVL55:
+ 538              	.L50:
+ 151:.\TaskDispatcher.c **** 
+ 539              		.loc 1 151 0
+ 540 0006 E300     		lsl	r3, r4, #3
+ 541 0008 0F49     		ldr	r1, .L51
+ 542 000a CB18     		add	r3, r1, r3
+ 543 000c D96A     		ldr	r1, [r3, #44]
+ 544 000e 0F4B     		ldr	r3, .L51+4
+ 545 0010 9942     		cmp	r1, r3
+ 546 0012 14D0     		beq	.L48
+ 153:.\TaskDispatcher.c ****     		{												// To Do: Вычислить по тактам, что лучше !=1 или !=0
+ 547              		.loc 1 153 0
+ 548 0014 E300     		lsl	r3, r4, #3
+ 549 0016 0C49     		ldr	r1, .L51
+ 550 0018 CB18     		add	r3, r1, r3
+ 551 001a 2C33     		add	r3, r3, #44
+ 552 001c 5B68     		ldr	r3, [r3, #4]
+ 553 001e 012B     		cmp	r3, #1
+ 554 0020 05D0     		beq	.L49
+ 155:.\TaskDispatcher.c ****     		}
+ 555              		.loc 1 155 0
+ 556 0022 E200     		lsl	r2, r4, #3
+ 557 0024 8B18     		add	r3, r1, r2
+ 558 0026 1A6B     		ldr	r2, [r3, #48]
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 15
+
+
+ 559 0028 013A     		sub	r2, r2, #1
+ 560 002a 1A63     		str	r2, [r3, #48]
+ 561 002c 07E0     		b	.L48
+ 562              	.L49:
+ 159:.\TaskDispatcher.c ****     		MainTimer[index].GoToTask = Idle;				// А в ячейку пишем затычку
+ 563              		.loc 1 159 0
+ 564 002e E200     		lsl	r2, r4, #3
+ 565 0030 054D     		ldr	r5, .L51
+ 566 0032 AD18     		add	r5, r5, r2
+ 567 0034 E86A     		ldr	r0, [r5, #44]
+ 568 0036 FFF7FEFF 		bl	SetTask
+ 569              	.LVL56:
+ 160:.\TaskDispatcher.c ****     		}
+ 570              		.loc 1 160 0
+ 571 003a 044B     		ldr	r3, .L51+4
+ 572 003c EB62     		str	r3, [r5, #44]
+ 573              	.L48:
+ 149:.\TaskDispatcher.c ****     	{
+ 574              		.loc 1 149 0 discriminator 2
+ 575 003e 0134     		add	r4, r4, #1
+ 576              	.LVL57:
+ 577 0040 E4B2     		uxtb	r4, r4
+ 578              	.LVL58:
+ 579              	.L47:
+ 149:.\TaskDispatcher.c ****     	{
+ 580              		.loc 1 149 0 is_stmt 0 discriminator 1
+ 581 0042 152C     		cmp	r4, #21
+ 582 0044 DFD1     		bne	.L50
+ 163:.\TaskDispatcher.c **** 
+ 583              		.loc 1 163 0 is_stmt 1
+ 584              		@ sp needed
+ 585              	.LVL59:
+ 586 0046 38BD     		pop	{r3, r4, r5, pc}
+ 587              	.L52:
+ 588              		.align	2
+ 589              	.L51:
+ 590 0048 00000000 		.word	.LANCHOR0
+ 591 004c 00000000 		.word	Idle
+ 592              		.cfi_endproc
+ 593              	.LFE39:
+ 594              		.size	TimerService, .-TimerService
+ 595              		.comm	System_Timer,40,4
+ 596              		.comm	System_Timer_Flag,5,4
+ 597              		.bss
+ 598              		.align	2
+ 599              		.set	.LANCHOR0,. + 0
+ 600              		.type	TaskQueue, %object
+ 601              		.size	TaskQueue, 44
+ 602              	TaskQueue:
+ 603 0000 00000000 		.space	44
+ 603      00000000 
+ 603      00000000 
+ 603      00000000 
+ 603      00000000 
+ 604              		.type	MainTimer, %object
+ 605              		.size	MainTimer, 168
+ 606              	MainTimer:
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 16
+
+
+ 607 002c 00000000 		.space	168
+ 607      00000000 
+ 607      00000000 
+ 607      00000000 
+ 607      00000000 
+ 608              		.text
+ 609              	.Letext0:
+ 610              		.file 2 "Generated_Source\\PSoC4/cytypes.h"
+ 611              		.file 3 ".\\SysClock.h"
+ 612              		.file 4 ".\\TaskDispatcher.h"
+ 613              		.file 5 "Generated_Source\\PSoC4/Timer_RTOS_ISR.h"
+ 614              		.section	.debug_info,"",%progbits
+ 615              	.Ldebug_info0:
+ 616 0000 9B030000 		.4byte	0x39b
+ 617 0004 0400     		.2byte	0x4
+ 618 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 619 000a 04       		.byte	0x4
+ 620 000b 01       		.uleb128 0x1
+ 621 000c AB010000 		.4byte	.LASF34
+ 622 0010 01       		.byte	0x1
+ 623 0011 30000000 		.4byte	.LASF35
+ 624 0015 98000000 		.4byte	.LASF36
+ 625 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 626 001d 00000000 		.4byte	0
+ 627 0021 00000000 		.4byte	.Ldebug_line0
+ 628 0025 02       		.uleb128 0x2
+ 629 0026 01       		.byte	0x1
+ 630 0027 06       		.byte	0x6
+ 631 0028 51020000 		.4byte	.LASF0
+ 632 002c 02       		.uleb128 0x2
+ 633 002d 01       		.byte	0x1
+ 634 002e 08       		.byte	0x8
+ 635 002f D4000000 		.4byte	.LASF1
+ 636 0033 02       		.uleb128 0x2
+ 637 0034 02       		.byte	0x2
+ 638 0035 05       		.byte	0x5
+ 639 0036 39020000 		.4byte	.LASF2
+ 640 003a 02       		.uleb128 0x2
+ 641 003b 02       		.byte	0x2
+ 642 003c 07       		.byte	0x7
+ 643 003d 5B000000 		.4byte	.LASF3
+ 644 0041 02       		.uleb128 0x2
+ 645 0042 04       		.byte	0x4
+ 646 0043 05       		.byte	0x5
+ 647 0044 43020000 		.4byte	.LASF4
+ 648 0048 02       		.uleb128 0x2
+ 649 0049 04       		.byte	0x4
+ 650 004a 07       		.byte	0x7
+ 651 004b E2000000 		.4byte	.LASF5
+ 652 004f 02       		.uleb128 0x2
+ 653 0050 08       		.byte	0x8
+ 654 0051 05       		.byte	0x5
+ 655 0052 89010000 		.4byte	.LASF6
+ 656 0056 02       		.uleb128 0x2
+ 657 0057 08       		.byte	0x8
+ 658 0058 07       		.byte	0x7
+ 659 0059 49010000 		.4byte	.LASF7
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 17
+
+
+ 660 005d 03       		.uleb128 0x3
+ 661 005e 04       		.byte	0x4
+ 662 005f 05       		.byte	0x5
+ 663 0060 696E7400 		.ascii	"int\000"
+ 664 0064 02       		.uleb128 0x2
+ 665 0065 04       		.byte	0x4
+ 666 0066 07       		.byte	0x7
+ 667 0067 35010000 		.4byte	.LASF8
+ 668 006b 04       		.uleb128 0x4
+ 669 006c F4000000 		.4byte	.LASF9
+ 670 0070 02       		.byte	0x2
+ 671 0071 C2       		.byte	0xc2
+ 672 0072 2C000000 		.4byte	0x2c
+ 673 0076 04       		.uleb128 0x4
+ 674 0077 2E010000 		.4byte	.LASF10
+ 675 007b 02       		.byte	0x2
+ 676 007c C4       		.byte	0xc4
+ 677 007d 48000000 		.4byte	0x48
+ 678 0081 02       		.uleb128 0x2
+ 679 0082 04       		.byte	0x4
+ 680 0083 04       		.byte	0x4
+ 681 0084 7B000000 		.4byte	.LASF11
+ 682 0088 02       		.uleb128 0x2
+ 683 0089 08       		.byte	0x8
+ 684 008a 04       		.byte	0x4
+ 685 008b 04010000 		.4byte	.LASF12
+ 686 008f 02       		.uleb128 0x2
+ 687 0090 01       		.byte	0x1
+ 688 0091 08       		.byte	0x8
+ 689 0092 4C020000 		.4byte	.LASF13
+ 690 0096 05       		.uleb128 0x5
+ 691 0097 6B000000 		.4byte	0x6b
+ 692 009b 05       		.uleb128 0x5
+ 693 009c 76000000 		.4byte	0x76
+ 694 00a0 06       		.uleb128 0x6
+ 695 00a1 60010000 		.4byte	.LASF14
+ 696 00a5 02       		.byte	0x2
+ 697 00a6 7E01     		.2byte	0x17e
+ 698 00a8 AC000000 		.4byte	0xac
+ 699 00ac 07       		.uleb128 0x7
+ 700 00ad 04       		.byte	0x4
+ 701 00ae B2000000 		.4byte	0xb2
+ 702 00b2 08       		.uleb128 0x8
+ 703 00b3 02       		.uleb128 0x2
+ 704 00b4 04       		.byte	0x4
+ 705 00b5 07       		.byte	0x7
+ 706 00b6 6D010000 		.4byte	.LASF15
+ 707 00ba 09       		.uleb128 0x9
+ 708 00bb 08       		.byte	0x8
+ 709 00bc 03       		.byte	0x3
+ 710 00bd 1B       		.byte	0x1b
+ 711 00be DB000000 		.4byte	0xdb
+ 712 00c2 0A       		.uleb128 0xa
+ 713 00c3 42010000 		.4byte	.LASF16
+ 714 00c7 03       		.byte	0x3
+ 715 00c8 1D       		.byte	0x1d
+ 716 00c9 96000000 		.4byte	0x96
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 18
+
+
+ 717 00cd 00       		.byte	0
+ 718 00ce 0A       		.uleb128 0xa
+ 719 00cf 5D020000 		.4byte	.LASF17
+ 720 00d3 03       		.byte	0x3
+ 721 00d4 1E       		.byte	0x1e
+ 722 00d5 9B000000 		.4byte	0x9b
+ 723 00d9 04       		.byte	0x4
+ 724 00da 00       		.byte	0
+ 725 00db 0B       		.uleb128 0xb
+ 726 00dc BA000000 		.4byte	0xba
+ 727 00e0 EB000000 		.4byte	0xeb
+ 728 00e4 0C       		.uleb128 0xc
+ 729 00e5 B3000000 		.4byte	0xb3
+ 730 00e9 04       		.byte	0x4
+ 731 00ea 00       		.byte	0
+ 732 00eb 09       		.uleb128 0x9
+ 733 00ec 01       		.byte	0x1
+ 734 00ed 03       		.byte	0x3
+ 735 00ee 20       		.byte	0x20
+ 736 00ef 00010000 		.4byte	0x100
+ 737 00f3 0A       		.uleb128 0xa
+ 738 00f4 97010000 		.4byte	.LASF18
+ 739 00f8 03       		.byte	0x3
+ 740 00f9 22       		.byte	0x22
+ 741 00fa 6B000000 		.4byte	0x6b
+ 742 00fe 00       		.byte	0
+ 743 00ff 00       		.byte	0
+ 744 0100 0B       		.uleb128 0xb
+ 745 0101 EB000000 		.4byte	0xeb
+ 746 0105 10010000 		.4byte	0x110
+ 747 0109 0C       		.uleb128 0xc
+ 748 010a B3000000 		.4byte	0xb3
+ 749 010e 04       		.byte	0x4
+ 750 010f 00       		.byte	0
+ 751 0110 04       		.uleb128 0x4
+ 752 0111 FF000000 		.4byte	.LASF19
+ 753 0115 04       		.byte	0x4
+ 754 0116 12       		.byte	0x12
+ 755 0117 AC000000 		.4byte	0xac
+ 756 011b 09       		.uleb128 0x9
+ 757 011c 08       		.byte	0x8
+ 758 011d 04       		.byte	0x4
+ 759 011e 16       		.byte	0x16
+ 760 011f 3C010000 		.4byte	0x13c
+ 761 0123 0A       		.uleb128 0xa
+ 762 0124 1D010000 		.4byte	.LASF20
+ 763 0128 04       		.byte	0x4
+ 764 0129 18       		.byte	0x18
+ 765 012a 10010000 		.4byte	0x110
+ 766 012e 00       		.byte	0
+ 767 012f 0A       		.uleb128 0xa
+ 768 0130 5D020000 		.4byte	.LASF17
+ 769 0134 04       		.byte	0x4
+ 770 0135 19       		.byte	0x19
+ 771 0136 76000000 		.4byte	0x76
+ 772 013a 04       		.byte	0x4
+ 773 013b 00       		.byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 19
+
+
+ 774 013c 0D       		.uleb128 0xd
+ 775 013d FA000000 		.4byte	.LASF37
+ 776 0141 01       		.byte	0x1
+ 777 0142 85       		.byte	0x85
+ 778 0143 03       		.byte	0x3
+ 779 0144 0E       		.uleb128 0xe
+ 780 0145 9C010000 		.4byte	.LASF25
+ 781 0149 01       		.byte	0x1
+ 782 014a 6E       		.byte	0x6e
+ 783 014b 03       		.byte	0x3
+ 784 014c 5C010000 		.4byte	0x15c
+ 785 0150 0F       		.uleb128 0xf
+ 786 0151 A5010000 		.4byte	.LASF21
+ 787 0155 01       		.byte	0x1
+ 788 0156 70       		.byte	0x70
+ 789 0157 6B000000 		.4byte	0x6b
+ 790 015b 00       		.byte	0
+ 791 015c 10       		.uleb128 0x10
+ 792 015d 3C010000 		.4byte	0x13c
+ 793 0161 00000000 		.4byte	.LFB38
+ 794 0165 02000000 		.4byte	.LFE38-.LFB38
+ 795 0169 01       		.uleb128 0x1
+ 796 016a 9C       		.byte	0x9c
+ 797 016b 11       		.uleb128 0x11
+ 798 016c 00000000 		.4byte	.LASF22
+ 799 0170 01       		.byte	0x1
+ 800 0171 0F       		.byte	0xf
+ 801 0172 00000000 		.4byte	.LFB33
+ 802 0176 3C000000 		.4byte	.LFE33-.LFB33
+ 803 017a 01       		.uleb128 0x1
+ 804 017b 9C       		.byte	0x9c
+ 805 017c 9F010000 		.4byte	0x19f
+ 806 0180 12       		.uleb128 0x12
+ 807 0181 A5010000 		.4byte	.LASF21
+ 808 0185 01       		.byte	0x1
+ 809 0186 11       		.byte	0x11
+ 810 0187 6B000000 		.4byte	0x6b
+ 811 018b 00000000 		.4byte	.LLST0
+ 812 018f 12       		.uleb128 0x12
+ 813 0190 1D010000 		.4byte	.LASF20
+ 814 0194 01       		.byte	0x1
+ 815 0195 12       		.byte	0x12
+ 816 0196 10010000 		.4byte	0x110
+ 817 019a 41000000 		.4byte	.LLST1
+ 818 019e 00       		.byte	0
+ 819 019f 13       		.uleb128 0x13
+ 820 01a0 76010000 		.4byte	.LASF23
+ 821 01a4 01       		.byte	0x1
+ 822 01a5 34       		.byte	0x34
+ 823 01a6 00000000 		.4byte	.LFB34
+ 824 01aa 34000000 		.4byte	.LFE34-.LFB34
+ 825 01ae 01       		.uleb128 0x1
+ 826 01af 9C       		.byte	0x9c
+ 827 01b0 DF010000 		.4byte	0x1df
+ 828 01b4 14       		.uleb128 0x14
+ 829 01b5 545300   		.ascii	"TS\000"
+ 830 01b8 01       		.byte	0x1
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 20
+
+
+ 831 01b9 34       		.byte	0x34
+ 832 01ba 10010000 		.4byte	0x110
+ 833 01be 01       		.uleb128 0x1
+ 834 01bf 50       		.byte	0x50
+ 835 01c0 12       		.uleb128 0x12
+ 836 01c1 A5010000 		.4byte	.LASF21
+ 837 01c5 01       		.byte	0x1
+ 838 01c6 36       		.byte	0x36
+ 839 01c7 6B000000 		.4byte	0x6b
+ 840 01cb 64000000 		.4byte	.LLST2
+ 841 01cf 12       		.uleb128 0x12
+ 842 01d0 4D000000 		.4byte	.LASF24
+ 843 01d4 01       		.byte	0x1
+ 844 01d5 37       		.byte	0x37
+ 845 01d6 6B000000 		.4byte	0x6b
+ 846 01da 8E000000 		.4byte	.LLST3
+ 847 01de 00       		.byte	0
+ 848 01df 0E       		.uleb128 0xe
+ 849 01e0 23000000 		.4byte	.LASF26
+ 850 01e4 01       		.byte	0x1
+ 851 01e5 91       		.byte	0x91
+ 852 01e6 03       		.byte	0x3
+ 853 01e7 F7010000 		.4byte	0x1f7
+ 854 01eb 0F       		.uleb128 0xf
+ 855 01ec A5010000 		.4byte	.LASF21
+ 856 01f0 01       		.byte	0x1
+ 857 01f1 93       		.byte	0x93
+ 858 01f2 6B000000 		.4byte	0x6b
+ 859 01f6 00       		.byte	0
+ 860 01f7 13       		.uleb128 0x13
+ 861 01f8 62020000 		.4byte	.LASF27
+ 862 01fc 01       		.byte	0x1
+ 863 01fd A7       		.byte	0xa7
+ 864 01fe 00000000 		.4byte	.LFB40
+ 865 0202 50000000 		.4byte	.LFE40-.LFB40
+ 866 0206 01       		.uleb128 0x1
+ 867 0207 9C       		.byte	0x9c
+ 868 0208 39020000 		.4byte	0x239
+ 869 020c 15       		.uleb128 0x15
+ 870 020d DF010000 		.4byte	0x1df
+ 871 0211 02000000 		.4byte	.LBB8
+ 872 0215 44000000 		.4byte	.LBE8-.LBB8
+ 873 0219 01       		.byte	0x1
+ 874 021a A9       		.byte	0xa9
+ 875 021b 16       		.uleb128 0x16
+ 876 021c 02000000 		.4byte	.LBB9
+ 877 0220 44000000 		.4byte	.LBE9-.LBB9
+ 878 0224 17       		.uleb128 0x17
+ 879 0225 EB010000 		.4byte	0x1eb
+ 880 0229 AE000000 		.4byte	.LLST4
+ 881 022d 18       		.uleb128 0x18
+ 882 022e 3A000000 		.4byte	.LVL20
+ 883 0232 9F010000 		.4byte	0x19f
+ 884 0236 00       		.byte	0
+ 885 0237 00       		.byte	0
+ 886 0238 00       		.byte	0
+ 887 0239 13       		.uleb128 0x13
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 21
+
+
+ 888 023a 6E000000 		.4byte	.LASF28
+ 889 023e 01       		.byte	0x1
+ 890 023f 4D       		.byte	0x4d
+ 891 0240 00000000 		.4byte	.LFB35
+ 892 0244 58000000 		.4byte	.LFE35-.LFB35
+ 893 0248 01       		.uleb128 0x1
+ 894 0249 9C       		.byte	0x9c
+ 895 024a 86020000 		.4byte	0x286
+ 896 024e 14       		.uleb128 0x14
+ 897 024f 545300   		.ascii	"TS\000"
+ 898 0252 01       		.byte	0x1
+ 899 0253 4D       		.byte	0x4d
+ 900 0254 10010000 		.4byte	0x110
+ 901 0258 01       		.uleb128 0x1
+ 902 0259 50       		.byte	0x50
+ 903 025a 19       		.uleb128 0x19
+ 904 025b 26010000 		.4byte	.LASF29
+ 905 025f 01       		.byte	0x1
+ 906 0260 4D       		.byte	0x4d
+ 907 0261 76000000 		.4byte	0x76
+ 908 0265 01       		.uleb128 0x1
+ 909 0266 51       		.byte	0x51
+ 910 0267 12       		.uleb128 0x12
+ 911 0268 A5010000 		.4byte	.LASF21
+ 912 026c 01       		.byte	0x1
+ 913 026d 4F       		.byte	0x4f
+ 914 026e 6B000000 		.4byte	0x6b
+ 915 0272 D8000000 		.4byte	.LLST5
+ 916 0276 12       		.uleb128 0x12
+ 917 0277 4D000000 		.4byte	.LASF24
+ 918 027b 01       		.byte	0x1
+ 919 027c 50       		.byte	0x50
+ 920 027d 6B000000 		.4byte	0x6b
+ 921 0281 23010000 		.4byte	.LLST6
+ 922 0285 00       		.byte	0
+ 923 0286 1A       		.uleb128 0x1a
+ 924 0287 44010000 		.4byte	0x144
+ 925 028b 00000000 		.4byte	.LFB36
+ 926 028f 3C000000 		.4byte	.LFE36-.LFB36
+ 927 0293 01       		.uleb128 0x1
+ 928 0294 9C       		.byte	0x9c
+ 929 0295 A3020000 		.4byte	0x2a3
+ 930 0299 17       		.uleb128 0x17
+ 931 029a 50010000 		.4byte	0x150
+ 932 029e 43010000 		.4byte	.LLST7
+ 933 02a2 00       		.byte	0
+ 934 02a3 1B       		.uleb128 0x1b
+ 935 02a4 7E010000 		.4byte	.LASF38
+ 936 02a8 01       		.byte	0x1
+ 937 02a9 7F       		.byte	0x7f
+ 938 02aa 00000000 		.4byte	.LFB37
+ 939 02ae 48000000 		.4byte	.LFE37-.LFB37
+ 940 02b2 01       		.uleb128 0x1
+ 941 02b3 9C       		.byte	0x9c
+ 942 02b4 F3020000 		.4byte	0x2f3
+ 943 02b8 1C       		.uleb128 0x1c
+ 944 02b9 44010000 		.4byte	0x144
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 22
+
+
+ 945 02bd 02000000 		.4byte	.LBB10
+ 946 02c1 30000000 		.4byte	.LBE10-.LBB10
+ 947 02c5 01       		.byte	0x1
+ 948 02c6 81       		.byte	0x81
+ 949 02c7 DF020000 		.4byte	0x2df
+ 950 02cb 16       		.uleb128 0x16
+ 951 02cc 02000000 		.4byte	.LBB11
+ 952 02d0 30000000 		.4byte	.LBE11-.LBB11
+ 953 02d4 17       		.uleb128 0x17
+ 954 02d5 50010000 		.4byte	0x150
+ 955 02d9 83010000 		.4byte	.LLST8
+ 956 02dd 00       		.byte	0
+ 957 02de 00       		.byte	0
+ 958 02df 1D       		.uleb128 0x1d
+ 959 02e0 38000000 		.4byte	.LVL53
+ 960 02e4 91030000 		.4byte	0x391
+ 961 02e8 1E       		.uleb128 0x1e
+ 962 02e9 01       		.uleb128 0x1
+ 963 02ea 50       		.byte	0x50
+ 964 02eb 05       		.uleb128 0x5
+ 965 02ec 03       		.byte	0x3
+ 966 02ed 00000000 		.4byte	TaskDispatcher_ISR
+ 967 02f1 00       		.byte	0
+ 968 02f2 00       		.byte	0
+ 969 02f3 1A       		.uleb128 0x1a
+ 970 02f4 DF010000 		.4byte	0x1df
+ 971 02f8 00000000 		.4byte	.LFB39
+ 972 02fc 50000000 		.4byte	.LFE39-.LFB39
+ 973 0300 01       		.uleb128 0x1
+ 974 0301 9C       		.byte	0x9c
+ 975 0302 19030000 		.4byte	0x319
+ 976 0306 17       		.uleb128 0x17
+ 977 0307 EB010000 		.4byte	0x1eb
+ 978 030b C3010000 		.4byte	.LLST9
+ 979 030f 18       		.uleb128 0x18
+ 980 0310 3A000000 		.4byte	.LVL56
+ 981 0314 9F010000 		.4byte	0x19f
+ 982 0318 00       		.byte	0
+ 983 0319 0B       		.uleb128 0xb
+ 984 031a 10010000 		.4byte	0x110
+ 985 031e 29030000 		.4byte	0x329
+ 986 0322 0C       		.uleb128 0xc
+ 987 0323 B3000000 		.4byte	0xb3
+ 988 0327 0A       		.byte	0xa
+ 989 0328 00       		.byte	0
+ 990 0329 1F       		.uleb128 0x1f
+ 991 032a 19000000 		.4byte	.LASF30
+ 992 032e 04       		.byte	0x4
+ 993 032f 14       		.byte	0x14
+ 994 0330 3A030000 		.4byte	0x33a
+ 995 0334 05       		.uleb128 0x5
+ 996 0335 03       		.byte	0x3
+ 997 0336 00000000 		.4byte	TaskQueue
+ 998 033a 05       		.uleb128 0x5
+ 999 033b 19030000 		.4byte	0x319
+ 1000 033f 0B       		.uleb128 0xb
+ 1001 0340 1B010000 		.4byte	0x11b
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 23
+
+
+ 1002 0344 4F030000 		.4byte	0x34f
+ 1003 0348 0C       		.uleb128 0xc
+ 1004 0349 B3000000 		.4byte	0xb3
+ 1005 034d 14       		.byte	0x14
+ 1006 034e 00       		.byte	0
+ 1007 034f 1F       		.uleb128 0x1f
+ 1008 0350 43000000 		.4byte	.LASF31
+ 1009 0354 04       		.byte	0x4
+ 1010 0355 1B       		.byte	0x1b
+ 1011 0356 60030000 		.4byte	0x360
+ 1012 035a 05       		.uleb128 0x5
+ 1013 035b 03       		.byte	0x3
+ 1014 035c 2C000000 		.4byte	MainTimer
+ 1015 0360 05       		.uleb128 0x5
+ 1016 0361 3F030000 		.4byte	0x33f
+ 1017 0365 20       		.uleb128 0x20
+ 1018 0366 0B010000 		.4byte	.LASF32
+ 1019 036a 03       		.byte	0x3
+ 1020 036b 25       		.byte	0x25
+ 1021 036c 76030000 		.4byte	0x376
+ 1022 0370 05       		.uleb128 0x5
+ 1023 0371 03       		.byte	0x3
+ 1024 0372 00000000 		.4byte	System_Timer_Flag
+ 1025 0376 05       		.uleb128 0x5
+ 1026 0377 00010000 		.4byte	0x100
+ 1027 037b 20       		.uleb128 0x20
+ 1028 037c 0C000000 		.4byte	.LASF33
+ 1029 0380 03       		.byte	0x3
+ 1030 0381 26       		.byte	0x26
+ 1031 0382 8C030000 		.4byte	0x38c
+ 1032 0386 05       		.uleb128 0x5
+ 1033 0387 03       		.byte	0x3
+ 1034 0388 00000000 		.4byte	System_Timer
+ 1035 038c 05       		.uleb128 0x5
+ 1036 038d DB000000 		.4byte	0xdb
+ 1037 0391 21       		.uleb128 0x21
+ 1038 0392 81000000 		.4byte	.LASF39
+ 1039 0396 05       		.byte	0x5
+ 1040 0397 18       		.byte	0x18
+ 1041 0398 22       		.uleb128 0x22
+ 1042 0399 A0000000 		.4byte	0xa0
+ 1043 039d 00       		.byte	0
+ 1044 039e 00       		.byte	0
+ 1045              		.section	.debug_abbrev,"",%progbits
+ 1046              	.Ldebug_abbrev0:
+ 1047 0000 01       		.uleb128 0x1
+ 1048 0001 11       		.uleb128 0x11
+ 1049 0002 01       		.byte	0x1
+ 1050 0003 25       		.uleb128 0x25
+ 1051 0004 0E       		.uleb128 0xe
+ 1052 0005 13       		.uleb128 0x13
+ 1053 0006 0B       		.uleb128 0xb
+ 1054 0007 03       		.uleb128 0x3
+ 1055 0008 0E       		.uleb128 0xe
+ 1056 0009 1B       		.uleb128 0x1b
+ 1057 000a 0E       		.uleb128 0xe
+ 1058 000b 55       		.uleb128 0x55
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 24
+
+
+ 1059 000c 17       		.uleb128 0x17
+ 1060 000d 11       		.uleb128 0x11
+ 1061 000e 01       		.uleb128 0x1
+ 1062 000f 10       		.uleb128 0x10
+ 1063 0010 17       		.uleb128 0x17
+ 1064 0011 00       		.byte	0
+ 1065 0012 00       		.byte	0
+ 1066 0013 02       		.uleb128 0x2
+ 1067 0014 24       		.uleb128 0x24
+ 1068 0015 00       		.byte	0
+ 1069 0016 0B       		.uleb128 0xb
+ 1070 0017 0B       		.uleb128 0xb
+ 1071 0018 3E       		.uleb128 0x3e
+ 1072 0019 0B       		.uleb128 0xb
+ 1073 001a 03       		.uleb128 0x3
+ 1074 001b 0E       		.uleb128 0xe
+ 1075 001c 00       		.byte	0
+ 1076 001d 00       		.byte	0
+ 1077 001e 03       		.uleb128 0x3
+ 1078 001f 24       		.uleb128 0x24
+ 1079 0020 00       		.byte	0
+ 1080 0021 0B       		.uleb128 0xb
+ 1081 0022 0B       		.uleb128 0xb
+ 1082 0023 3E       		.uleb128 0x3e
+ 1083 0024 0B       		.uleb128 0xb
+ 1084 0025 03       		.uleb128 0x3
+ 1085 0026 08       		.uleb128 0x8
+ 1086 0027 00       		.byte	0
+ 1087 0028 00       		.byte	0
+ 1088 0029 04       		.uleb128 0x4
+ 1089 002a 16       		.uleb128 0x16
+ 1090 002b 00       		.byte	0
+ 1091 002c 03       		.uleb128 0x3
+ 1092 002d 0E       		.uleb128 0xe
+ 1093 002e 3A       		.uleb128 0x3a
+ 1094 002f 0B       		.uleb128 0xb
+ 1095 0030 3B       		.uleb128 0x3b
+ 1096 0031 0B       		.uleb128 0xb
+ 1097 0032 49       		.uleb128 0x49
+ 1098 0033 13       		.uleb128 0x13
+ 1099 0034 00       		.byte	0
+ 1100 0035 00       		.byte	0
+ 1101 0036 05       		.uleb128 0x5
+ 1102 0037 35       		.uleb128 0x35
+ 1103 0038 00       		.byte	0
+ 1104 0039 49       		.uleb128 0x49
+ 1105 003a 13       		.uleb128 0x13
+ 1106 003b 00       		.byte	0
+ 1107 003c 00       		.byte	0
+ 1108 003d 06       		.uleb128 0x6
+ 1109 003e 16       		.uleb128 0x16
+ 1110 003f 00       		.byte	0
+ 1111 0040 03       		.uleb128 0x3
+ 1112 0041 0E       		.uleb128 0xe
+ 1113 0042 3A       		.uleb128 0x3a
+ 1114 0043 0B       		.uleb128 0xb
+ 1115 0044 3B       		.uleb128 0x3b
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 25
+
+
+ 1116 0045 05       		.uleb128 0x5
+ 1117 0046 49       		.uleb128 0x49
+ 1118 0047 13       		.uleb128 0x13
+ 1119 0048 00       		.byte	0
+ 1120 0049 00       		.byte	0
+ 1121 004a 07       		.uleb128 0x7
+ 1122 004b 0F       		.uleb128 0xf
+ 1123 004c 00       		.byte	0
+ 1124 004d 0B       		.uleb128 0xb
+ 1125 004e 0B       		.uleb128 0xb
+ 1126 004f 49       		.uleb128 0x49
+ 1127 0050 13       		.uleb128 0x13
+ 1128 0051 00       		.byte	0
+ 1129 0052 00       		.byte	0
+ 1130 0053 08       		.uleb128 0x8
+ 1131 0054 15       		.uleb128 0x15
+ 1132 0055 00       		.byte	0
+ 1133 0056 27       		.uleb128 0x27
+ 1134 0057 19       		.uleb128 0x19
+ 1135 0058 00       		.byte	0
+ 1136 0059 00       		.byte	0
+ 1137 005a 09       		.uleb128 0x9
+ 1138 005b 13       		.uleb128 0x13
+ 1139 005c 01       		.byte	0x1
+ 1140 005d 0B       		.uleb128 0xb
+ 1141 005e 0B       		.uleb128 0xb
+ 1142 005f 3A       		.uleb128 0x3a
+ 1143 0060 0B       		.uleb128 0xb
+ 1144 0061 3B       		.uleb128 0x3b
+ 1145 0062 0B       		.uleb128 0xb
+ 1146 0063 01       		.uleb128 0x1
+ 1147 0064 13       		.uleb128 0x13
+ 1148 0065 00       		.byte	0
+ 1149 0066 00       		.byte	0
+ 1150 0067 0A       		.uleb128 0xa
+ 1151 0068 0D       		.uleb128 0xd
+ 1152 0069 00       		.byte	0
+ 1153 006a 03       		.uleb128 0x3
+ 1154 006b 0E       		.uleb128 0xe
+ 1155 006c 3A       		.uleb128 0x3a
+ 1156 006d 0B       		.uleb128 0xb
+ 1157 006e 3B       		.uleb128 0x3b
+ 1158 006f 0B       		.uleb128 0xb
+ 1159 0070 49       		.uleb128 0x49
+ 1160 0071 13       		.uleb128 0x13
+ 1161 0072 38       		.uleb128 0x38
+ 1162 0073 0B       		.uleb128 0xb
+ 1163 0074 00       		.byte	0
+ 1164 0075 00       		.byte	0
+ 1165 0076 0B       		.uleb128 0xb
+ 1166 0077 01       		.uleb128 0x1
+ 1167 0078 01       		.byte	0x1
+ 1168 0079 49       		.uleb128 0x49
+ 1169 007a 13       		.uleb128 0x13
+ 1170 007b 01       		.uleb128 0x1
+ 1171 007c 13       		.uleb128 0x13
+ 1172 007d 00       		.byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 26
+
+
+ 1173 007e 00       		.byte	0
+ 1174 007f 0C       		.uleb128 0xc
+ 1175 0080 21       		.uleb128 0x21
+ 1176 0081 00       		.byte	0
+ 1177 0082 49       		.uleb128 0x49
+ 1178 0083 13       		.uleb128 0x13
+ 1179 0084 2F       		.uleb128 0x2f
+ 1180 0085 0B       		.uleb128 0xb
+ 1181 0086 00       		.byte	0
+ 1182 0087 00       		.byte	0
+ 1183 0088 0D       		.uleb128 0xd
+ 1184 0089 2E       		.uleb128 0x2e
+ 1185 008a 00       		.byte	0
+ 1186 008b 3F       		.uleb128 0x3f
+ 1187 008c 19       		.uleb128 0x19
+ 1188 008d 03       		.uleb128 0x3
+ 1189 008e 0E       		.uleb128 0xe
+ 1190 008f 3A       		.uleb128 0x3a
+ 1191 0090 0B       		.uleb128 0xb
+ 1192 0091 3B       		.uleb128 0x3b
+ 1193 0092 0B       		.uleb128 0xb
+ 1194 0093 27       		.uleb128 0x27
+ 1195 0094 19       		.uleb128 0x19
+ 1196 0095 20       		.uleb128 0x20
+ 1197 0096 0B       		.uleb128 0xb
+ 1198 0097 00       		.byte	0
+ 1199 0098 00       		.byte	0
+ 1200 0099 0E       		.uleb128 0xe
+ 1201 009a 2E       		.uleb128 0x2e
+ 1202 009b 01       		.byte	0x1
+ 1203 009c 3F       		.uleb128 0x3f
+ 1204 009d 19       		.uleb128 0x19
+ 1205 009e 03       		.uleb128 0x3
+ 1206 009f 0E       		.uleb128 0xe
+ 1207 00a0 3A       		.uleb128 0x3a
+ 1208 00a1 0B       		.uleb128 0xb
+ 1209 00a2 3B       		.uleb128 0x3b
+ 1210 00a3 0B       		.uleb128 0xb
+ 1211 00a4 27       		.uleb128 0x27
+ 1212 00a5 19       		.uleb128 0x19
+ 1213 00a6 20       		.uleb128 0x20
+ 1214 00a7 0B       		.uleb128 0xb
+ 1215 00a8 01       		.uleb128 0x1
+ 1216 00a9 13       		.uleb128 0x13
+ 1217 00aa 00       		.byte	0
+ 1218 00ab 00       		.byte	0
+ 1219 00ac 0F       		.uleb128 0xf
+ 1220 00ad 34       		.uleb128 0x34
+ 1221 00ae 00       		.byte	0
+ 1222 00af 03       		.uleb128 0x3
+ 1223 00b0 0E       		.uleb128 0xe
+ 1224 00b1 3A       		.uleb128 0x3a
+ 1225 00b2 0B       		.uleb128 0xb
+ 1226 00b3 3B       		.uleb128 0x3b
+ 1227 00b4 0B       		.uleb128 0xb
+ 1228 00b5 49       		.uleb128 0x49
+ 1229 00b6 13       		.uleb128 0x13
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 27
+
+
+ 1230 00b7 00       		.byte	0
+ 1231 00b8 00       		.byte	0
+ 1232 00b9 10       		.uleb128 0x10
+ 1233 00ba 2E       		.uleb128 0x2e
+ 1234 00bb 00       		.byte	0
+ 1235 00bc 31       		.uleb128 0x31
+ 1236 00bd 13       		.uleb128 0x13
+ 1237 00be 11       		.uleb128 0x11
+ 1238 00bf 01       		.uleb128 0x1
+ 1239 00c0 12       		.uleb128 0x12
+ 1240 00c1 06       		.uleb128 0x6
+ 1241 00c2 40       		.uleb128 0x40
+ 1242 00c3 18       		.uleb128 0x18
+ 1243 00c4 9742     		.uleb128 0x2117
+ 1244 00c6 19       		.uleb128 0x19
+ 1245 00c7 00       		.byte	0
+ 1246 00c8 00       		.byte	0
+ 1247 00c9 11       		.uleb128 0x11
+ 1248 00ca 2E       		.uleb128 0x2e
+ 1249 00cb 01       		.byte	0x1
+ 1250 00cc 3F       		.uleb128 0x3f
+ 1251 00cd 19       		.uleb128 0x19
+ 1252 00ce 03       		.uleb128 0x3
+ 1253 00cf 0E       		.uleb128 0xe
+ 1254 00d0 3A       		.uleb128 0x3a
+ 1255 00d1 0B       		.uleb128 0xb
+ 1256 00d2 3B       		.uleb128 0x3b
+ 1257 00d3 0B       		.uleb128 0xb
+ 1258 00d4 27       		.uleb128 0x27
+ 1259 00d5 19       		.uleb128 0x19
+ 1260 00d6 11       		.uleb128 0x11
+ 1261 00d7 01       		.uleb128 0x1
+ 1262 00d8 12       		.uleb128 0x12
+ 1263 00d9 06       		.uleb128 0x6
+ 1264 00da 40       		.uleb128 0x40
+ 1265 00db 18       		.uleb128 0x18
+ 1266 00dc 9642     		.uleb128 0x2116
+ 1267 00de 19       		.uleb128 0x19
+ 1268 00df 01       		.uleb128 0x1
+ 1269 00e0 13       		.uleb128 0x13
+ 1270 00e1 00       		.byte	0
+ 1271 00e2 00       		.byte	0
+ 1272 00e3 12       		.uleb128 0x12
+ 1273 00e4 34       		.uleb128 0x34
+ 1274 00e5 00       		.byte	0
+ 1275 00e6 03       		.uleb128 0x3
+ 1276 00e7 0E       		.uleb128 0xe
+ 1277 00e8 3A       		.uleb128 0x3a
+ 1278 00e9 0B       		.uleb128 0xb
+ 1279 00ea 3B       		.uleb128 0x3b
+ 1280 00eb 0B       		.uleb128 0xb
+ 1281 00ec 49       		.uleb128 0x49
+ 1282 00ed 13       		.uleb128 0x13
+ 1283 00ee 02       		.uleb128 0x2
+ 1284 00ef 17       		.uleb128 0x17
+ 1285 00f0 00       		.byte	0
+ 1286 00f1 00       		.byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 28
+
+
+ 1287 00f2 13       		.uleb128 0x13
+ 1288 00f3 2E       		.uleb128 0x2e
+ 1289 00f4 01       		.byte	0x1
+ 1290 00f5 3F       		.uleb128 0x3f
+ 1291 00f6 19       		.uleb128 0x19
+ 1292 00f7 03       		.uleb128 0x3
+ 1293 00f8 0E       		.uleb128 0xe
+ 1294 00f9 3A       		.uleb128 0x3a
+ 1295 00fa 0B       		.uleb128 0xb
+ 1296 00fb 3B       		.uleb128 0x3b
+ 1297 00fc 0B       		.uleb128 0xb
+ 1298 00fd 27       		.uleb128 0x27
+ 1299 00fe 19       		.uleb128 0x19
+ 1300 00ff 11       		.uleb128 0x11
+ 1301 0100 01       		.uleb128 0x1
+ 1302 0101 12       		.uleb128 0x12
+ 1303 0102 06       		.uleb128 0x6
+ 1304 0103 40       		.uleb128 0x40
+ 1305 0104 18       		.uleb128 0x18
+ 1306 0105 9742     		.uleb128 0x2117
+ 1307 0107 19       		.uleb128 0x19
+ 1308 0108 01       		.uleb128 0x1
+ 1309 0109 13       		.uleb128 0x13
+ 1310 010a 00       		.byte	0
+ 1311 010b 00       		.byte	0
+ 1312 010c 14       		.uleb128 0x14
+ 1313 010d 05       		.uleb128 0x5
+ 1314 010e 00       		.byte	0
+ 1315 010f 03       		.uleb128 0x3
+ 1316 0110 08       		.uleb128 0x8
+ 1317 0111 3A       		.uleb128 0x3a
+ 1318 0112 0B       		.uleb128 0xb
+ 1319 0113 3B       		.uleb128 0x3b
+ 1320 0114 0B       		.uleb128 0xb
+ 1321 0115 49       		.uleb128 0x49
+ 1322 0116 13       		.uleb128 0x13
+ 1323 0117 02       		.uleb128 0x2
+ 1324 0118 18       		.uleb128 0x18
+ 1325 0119 00       		.byte	0
+ 1326 011a 00       		.byte	0
+ 1327 011b 15       		.uleb128 0x15
+ 1328 011c 1D       		.uleb128 0x1d
+ 1329 011d 01       		.byte	0x1
+ 1330 011e 31       		.uleb128 0x31
+ 1331 011f 13       		.uleb128 0x13
+ 1332 0120 11       		.uleb128 0x11
+ 1333 0121 01       		.uleb128 0x1
+ 1334 0122 12       		.uleb128 0x12
+ 1335 0123 06       		.uleb128 0x6
+ 1336 0124 58       		.uleb128 0x58
+ 1337 0125 0B       		.uleb128 0xb
+ 1338 0126 59       		.uleb128 0x59
+ 1339 0127 0B       		.uleb128 0xb
+ 1340 0128 00       		.byte	0
+ 1341 0129 00       		.byte	0
+ 1342 012a 16       		.uleb128 0x16
+ 1343 012b 0B       		.uleb128 0xb
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 29
+
+
+ 1344 012c 01       		.byte	0x1
+ 1345 012d 11       		.uleb128 0x11
+ 1346 012e 01       		.uleb128 0x1
+ 1347 012f 12       		.uleb128 0x12
+ 1348 0130 06       		.uleb128 0x6
+ 1349 0131 00       		.byte	0
+ 1350 0132 00       		.byte	0
+ 1351 0133 17       		.uleb128 0x17
+ 1352 0134 34       		.uleb128 0x34
+ 1353 0135 00       		.byte	0
+ 1354 0136 31       		.uleb128 0x31
+ 1355 0137 13       		.uleb128 0x13
+ 1356 0138 02       		.uleb128 0x2
+ 1357 0139 17       		.uleb128 0x17
+ 1358 013a 00       		.byte	0
+ 1359 013b 00       		.byte	0
+ 1360 013c 18       		.uleb128 0x18
+ 1361 013d 898201   		.uleb128 0x4109
+ 1362 0140 00       		.byte	0
+ 1363 0141 11       		.uleb128 0x11
+ 1364 0142 01       		.uleb128 0x1
+ 1365 0143 31       		.uleb128 0x31
+ 1366 0144 13       		.uleb128 0x13
+ 1367 0145 00       		.byte	0
+ 1368 0146 00       		.byte	0
+ 1369 0147 19       		.uleb128 0x19
+ 1370 0148 05       		.uleb128 0x5
+ 1371 0149 00       		.byte	0
+ 1372 014a 03       		.uleb128 0x3
+ 1373 014b 0E       		.uleb128 0xe
+ 1374 014c 3A       		.uleb128 0x3a
+ 1375 014d 0B       		.uleb128 0xb
+ 1376 014e 3B       		.uleb128 0x3b
+ 1377 014f 0B       		.uleb128 0xb
+ 1378 0150 49       		.uleb128 0x49
+ 1379 0151 13       		.uleb128 0x13
+ 1380 0152 02       		.uleb128 0x2
+ 1381 0153 18       		.uleb128 0x18
+ 1382 0154 00       		.byte	0
+ 1383 0155 00       		.byte	0
+ 1384 0156 1A       		.uleb128 0x1a
+ 1385 0157 2E       		.uleb128 0x2e
+ 1386 0158 01       		.byte	0x1
+ 1387 0159 31       		.uleb128 0x31
+ 1388 015a 13       		.uleb128 0x13
+ 1389 015b 11       		.uleb128 0x11
+ 1390 015c 01       		.uleb128 0x1
+ 1391 015d 12       		.uleb128 0x12
+ 1392 015e 06       		.uleb128 0x6
+ 1393 015f 40       		.uleb128 0x40
+ 1394 0160 18       		.uleb128 0x18
+ 1395 0161 9742     		.uleb128 0x2117
+ 1396 0163 19       		.uleb128 0x19
+ 1397 0164 01       		.uleb128 0x1
+ 1398 0165 13       		.uleb128 0x13
+ 1399 0166 00       		.byte	0
+ 1400 0167 00       		.byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 30
+
+
+ 1401 0168 1B       		.uleb128 0x1b
+ 1402 0169 2E       		.uleb128 0x2e
+ 1403 016a 01       		.byte	0x1
+ 1404 016b 3F       		.uleb128 0x3f
+ 1405 016c 19       		.uleb128 0x19
+ 1406 016d 03       		.uleb128 0x3
+ 1407 016e 0E       		.uleb128 0xe
+ 1408 016f 3A       		.uleb128 0x3a
+ 1409 0170 0B       		.uleb128 0xb
+ 1410 0171 3B       		.uleb128 0x3b
+ 1411 0172 0B       		.uleb128 0xb
+ 1412 0173 11       		.uleb128 0x11
+ 1413 0174 01       		.uleb128 0x1
+ 1414 0175 12       		.uleb128 0x12
+ 1415 0176 06       		.uleb128 0x6
+ 1416 0177 40       		.uleb128 0x40
+ 1417 0178 18       		.uleb128 0x18
+ 1418 0179 9742     		.uleb128 0x2117
+ 1419 017b 19       		.uleb128 0x19
+ 1420 017c 01       		.uleb128 0x1
+ 1421 017d 13       		.uleb128 0x13
+ 1422 017e 00       		.byte	0
+ 1423 017f 00       		.byte	0
+ 1424 0180 1C       		.uleb128 0x1c
+ 1425 0181 1D       		.uleb128 0x1d
+ 1426 0182 01       		.byte	0x1
+ 1427 0183 31       		.uleb128 0x31
+ 1428 0184 13       		.uleb128 0x13
+ 1429 0185 11       		.uleb128 0x11
+ 1430 0186 01       		.uleb128 0x1
+ 1431 0187 12       		.uleb128 0x12
+ 1432 0188 06       		.uleb128 0x6
+ 1433 0189 58       		.uleb128 0x58
+ 1434 018a 0B       		.uleb128 0xb
+ 1435 018b 59       		.uleb128 0x59
+ 1436 018c 0B       		.uleb128 0xb
+ 1437 018d 01       		.uleb128 0x1
+ 1438 018e 13       		.uleb128 0x13
+ 1439 018f 00       		.byte	0
+ 1440 0190 00       		.byte	0
+ 1441 0191 1D       		.uleb128 0x1d
+ 1442 0192 898201   		.uleb128 0x4109
+ 1443 0195 01       		.byte	0x1
+ 1444 0196 11       		.uleb128 0x11
+ 1445 0197 01       		.uleb128 0x1
+ 1446 0198 31       		.uleb128 0x31
+ 1447 0199 13       		.uleb128 0x13
+ 1448 019a 00       		.byte	0
+ 1449 019b 00       		.byte	0
+ 1450 019c 1E       		.uleb128 0x1e
+ 1451 019d 8A8201   		.uleb128 0x410a
+ 1452 01a0 00       		.byte	0
+ 1453 01a1 02       		.uleb128 0x2
+ 1454 01a2 18       		.uleb128 0x18
+ 1455 01a3 9142     		.uleb128 0x2111
+ 1456 01a5 18       		.uleb128 0x18
+ 1457 01a6 00       		.byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 31
+
+
+ 1458 01a7 00       		.byte	0
+ 1459 01a8 1F       		.uleb128 0x1f
+ 1460 01a9 34       		.uleb128 0x34
+ 1461 01aa 00       		.byte	0
+ 1462 01ab 03       		.uleb128 0x3
+ 1463 01ac 0E       		.uleb128 0xe
+ 1464 01ad 3A       		.uleb128 0x3a
+ 1465 01ae 0B       		.uleb128 0xb
+ 1466 01af 3B       		.uleb128 0x3b
+ 1467 01b0 0B       		.uleb128 0xb
+ 1468 01b1 49       		.uleb128 0x49
+ 1469 01b2 13       		.uleb128 0x13
+ 1470 01b3 02       		.uleb128 0x2
+ 1471 01b4 18       		.uleb128 0x18
+ 1472 01b5 00       		.byte	0
+ 1473 01b6 00       		.byte	0
+ 1474 01b7 20       		.uleb128 0x20
+ 1475 01b8 34       		.uleb128 0x34
+ 1476 01b9 00       		.byte	0
+ 1477 01ba 03       		.uleb128 0x3
+ 1478 01bb 0E       		.uleb128 0xe
+ 1479 01bc 3A       		.uleb128 0x3a
+ 1480 01bd 0B       		.uleb128 0xb
+ 1481 01be 3B       		.uleb128 0x3b
+ 1482 01bf 0B       		.uleb128 0xb
+ 1483 01c0 49       		.uleb128 0x49
+ 1484 01c1 13       		.uleb128 0x13
+ 1485 01c2 3F       		.uleb128 0x3f
+ 1486 01c3 19       		.uleb128 0x19
+ 1487 01c4 02       		.uleb128 0x2
+ 1488 01c5 18       		.uleb128 0x18
+ 1489 01c6 00       		.byte	0
+ 1490 01c7 00       		.byte	0
+ 1491 01c8 21       		.uleb128 0x21
+ 1492 01c9 2E       		.uleb128 0x2e
+ 1493 01ca 01       		.byte	0x1
+ 1494 01cb 3F       		.uleb128 0x3f
+ 1495 01cc 19       		.uleb128 0x19
+ 1496 01cd 03       		.uleb128 0x3
+ 1497 01ce 0E       		.uleb128 0xe
+ 1498 01cf 3A       		.uleb128 0x3a
+ 1499 01d0 0B       		.uleb128 0xb
+ 1500 01d1 3B       		.uleb128 0x3b
+ 1501 01d2 0B       		.uleb128 0xb
+ 1502 01d3 27       		.uleb128 0x27
+ 1503 01d4 19       		.uleb128 0x19
+ 1504 01d5 3C       		.uleb128 0x3c
+ 1505 01d6 19       		.uleb128 0x19
+ 1506 01d7 00       		.byte	0
+ 1507 01d8 00       		.byte	0
+ 1508 01d9 22       		.uleb128 0x22
+ 1509 01da 05       		.uleb128 0x5
+ 1510 01db 00       		.byte	0
+ 1511 01dc 49       		.uleb128 0x49
+ 1512 01dd 13       		.uleb128 0x13
+ 1513 01de 00       		.byte	0
+ 1514 01df 00       		.byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 32
+
+
+ 1515 01e0 00       		.byte	0
+ 1516              		.section	.debug_loc,"",%progbits
+ 1517              	.Ldebug_loc0:
+ 1518              	.LLST0:
+ 1519 0000 02000000 		.4byte	.LVL0
+ 1520 0004 12000000 		.4byte	.LVL2
+ 1521 0008 0200     		.2byte	0x2
+ 1522 000a 30       		.byte	0x30
+ 1523 000b 9F       		.byte	0x9f
+ 1524 000c 12000000 		.4byte	.LVL2
+ 1525 0010 1C000000 		.4byte	.LVL3
+ 1526 0014 0100     		.2byte	0x1
+ 1527 0016 53       		.byte	0x53
+ 1528 0017 20000000 		.4byte	.LVL4
+ 1529 001b 22000000 		.4byte	.LVL5
+ 1530 001f 0100     		.2byte	0x1
+ 1531 0021 53       		.byte	0x53
+ 1532 0022 22000000 		.4byte	.LVL5
+ 1533 0026 24000000 		.4byte	.LVL6
+ 1534 002a 0200     		.2byte	0x2
+ 1535 002c 30       		.byte	0x30
+ 1536 002d 9F       		.byte	0x9f
+ 1537 002e 24000000 		.4byte	.LVL6
+ 1538 0032 2C000000 		.4byte	.LVL7
+ 1539 0036 0100     		.2byte	0x1
+ 1540 0038 53       		.byte	0x53
+ 1541 0039 00000000 		.4byte	0
+ 1542 003d 00000000 		.4byte	0
+ 1543              	.LLST1:
+ 1544 0041 02000000 		.4byte	.LVL0
+ 1545 0045 08000000 		.4byte	.LVL1
+ 1546 0049 0600     		.2byte	0x6
+ 1547 004b 03       		.byte	0x3
+ 1548 004c 00000000 		.4byte	Idle
+ 1549 0050 9F       		.byte	0x9f
+ 1550 0051 08000000 		.4byte	.LVL1
+ 1551 0055 32000000 		.4byte	.LVL9
+ 1552 0059 0100     		.2byte	0x1
+ 1553 005b 54       		.byte	0x54
+ 1554 005c 00000000 		.4byte	0
+ 1555 0060 00000000 		.4byte	0
+ 1556              	.LLST2:
+ 1557 0064 02000000 		.4byte	.LVL11
+ 1558 0068 08000000 		.4byte	.LVL13
+ 1559 006c 0200     		.2byte	0x2
+ 1560 006e 30       		.byte	0x30
+ 1561 006f 9F       		.byte	0x9f
+ 1562 0070 08000000 		.4byte	.LVL13
+ 1563 0074 0A000000 		.4byte	.LVL14
+ 1564 0078 0100     		.2byte	0x1
+ 1565 007a 53       		.byte	0x53
+ 1566 007b 0C000000 		.4byte	.LVL15
+ 1567 007f 24000000 		.4byte	.LVL17
+ 1568 0083 0100     		.2byte	0x1
+ 1569 0085 53       		.byte	0x53
+ 1570 0086 00000000 		.4byte	0
+ 1571 008a 00000000 		.4byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 33
+
+
+ 1572              	.LLST3:
+ 1573 008e 02000000 		.4byte	.LVL11
+ 1574 0092 04000000 		.4byte	.LVL12
+ 1575 0096 0200     		.2byte	0x2
+ 1576 0098 30       		.byte	0x30
+ 1577 0099 9F       		.byte	0x9f
+ 1578 009a 04000000 		.4byte	.LVL12
+ 1579 009e 34000000 		.4byte	.LFE34
+ 1580 00a2 0200     		.2byte	0x2
+ 1581 00a4 31       		.byte	0x31
+ 1582 00a5 9F       		.byte	0x9f
+ 1583 00a6 00000000 		.4byte	0
+ 1584 00aa 00000000 		.4byte	0
+ 1585              	.LLST4:
+ 1586 00ae 02000000 		.4byte	.LVL18
+ 1587 00b2 06000000 		.4byte	.LVL19
+ 1588 00b6 0200     		.2byte	0x2
+ 1589 00b8 30       		.byte	0x30
+ 1590 00b9 9F       		.byte	0x9f
+ 1591 00ba 06000000 		.4byte	.LVL19
+ 1592 00be 40000000 		.4byte	.LVL21
+ 1593 00c2 0100     		.2byte	0x1
+ 1594 00c4 54       		.byte	0x54
+ 1595 00c5 42000000 		.4byte	.LVL22
+ 1596 00c9 46000000 		.4byte	.LVL23
+ 1597 00cd 0100     		.2byte	0x1
+ 1598 00cf 54       		.byte	0x54
+ 1599 00d0 00000000 		.4byte	0
+ 1600 00d4 00000000 		.4byte	0
+ 1601              	.LLST5:
+ 1602 00d8 02000000 		.4byte	.LVL25
+ 1603 00dc 08000000 		.4byte	.LVL27
+ 1604 00e0 0200     		.2byte	0x2
+ 1605 00e2 30       		.byte	0x30
+ 1606 00e3 9F       		.byte	0x9f
+ 1607 00e4 08000000 		.4byte	.LVL27
+ 1608 00e8 20000000 		.4byte	.LVL28
+ 1609 00ec 0100     		.2byte	0x1
+ 1610 00ee 53       		.byte	0x53
+ 1611 00ef 22000000 		.4byte	.LVL29
+ 1612 00f3 28000000 		.4byte	.LVL30
+ 1613 00f7 0100     		.2byte	0x1
+ 1614 00f9 53       		.byte	0x53
+ 1615 00fa 2A000000 		.4byte	.LVL31
+ 1616 00fe 3C000000 		.4byte	.LVL32
+ 1617 0102 0100     		.2byte	0x1
+ 1618 0104 53       		.byte	0x53
+ 1619 0105 46000000 		.4byte	.LVL33
+ 1620 0109 48000000 		.4byte	.LVL34
+ 1621 010d 0100     		.2byte	0x1
+ 1622 010f 53       		.byte	0x53
+ 1623 0110 4A000000 		.4byte	.LVL35
+ 1624 0114 4E000000 		.4byte	.LVL36
+ 1625 0118 0100     		.2byte	0x1
+ 1626 011a 53       		.byte	0x53
+ 1627 011b 00000000 		.4byte	0
+ 1628 011f 00000000 		.4byte	0
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 34
+
+
+ 1629              	.LLST6:
+ 1630 0123 02000000 		.4byte	.LVL25
+ 1631 0127 04000000 		.4byte	.LVL26
+ 1632 012b 0200     		.2byte	0x2
+ 1633 012d 30       		.byte	0x30
+ 1634 012e 9F       		.byte	0x9f
+ 1635 012f 04000000 		.4byte	.LVL26
+ 1636 0133 58000000 		.4byte	.LFE35
+ 1637 0137 0200     		.2byte	0x2
+ 1638 0139 31       		.byte	0x31
+ 1639 013a 9F       		.byte	0x9f
+ 1640 013b 00000000 		.4byte	0
+ 1641 013f 00000000 		.4byte	0
+ 1642              	.LLST7:
+ 1643 0143 00000000 		.4byte	.LVL37
+ 1644 0147 04000000 		.4byte	.LVL38
+ 1645 014b 0200     		.2byte	0x2
+ 1646 014d 30       		.byte	0x30
+ 1647 014e 9F       		.byte	0x9f
+ 1648 014f 04000000 		.4byte	.LVL38
+ 1649 0153 0E000000 		.4byte	.LVL39
+ 1650 0157 0100     		.2byte	0x1
+ 1651 0159 53       		.byte	0x53
+ 1652 015a 10000000 		.4byte	.LVL40
+ 1653 015e 16000000 		.4byte	.LVL41
+ 1654 0162 0100     		.2byte	0x1
+ 1655 0164 53       		.byte	0x53
+ 1656 0165 18000000 		.4byte	.LVL42
+ 1657 0169 2A000000 		.4byte	.LVL43
+ 1658 016d 0100     		.2byte	0x1
+ 1659 016f 53       		.byte	0x53
+ 1660 0170 2C000000 		.4byte	.LVL44
+ 1661 0174 3C000000 		.4byte	.LFE36
+ 1662 0178 0100     		.2byte	0x1
+ 1663 017a 53       		.byte	0x53
+ 1664 017b 00000000 		.4byte	0
+ 1665 017f 00000000 		.4byte	0
+ 1666              	.LLST8:
+ 1667 0183 02000000 		.4byte	.LVL45
+ 1668 0187 06000000 		.4byte	.LVL46
+ 1669 018b 0200     		.2byte	0x2
+ 1670 018d 30       		.byte	0x30
+ 1671 018e 9F       		.byte	0x9f
+ 1672 018f 06000000 		.4byte	.LVL46
+ 1673 0193 10000000 		.4byte	.LVL47
+ 1674 0197 0100     		.2byte	0x1
+ 1675 0199 53       		.byte	0x53
+ 1676 019a 12000000 		.4byte	.LVL48
+ 1677 019e 18000000 		.4byte	.LVL49
+ 1678 01a2 0100     		.2byte	0x1
+ 1679 01a4 53       		.byte	0x53
+ 1680 01a5 1A000000 		.4byte	.LVL50
+ 1681 01a9 2C000000 		.4byte	.LVL51
+ 1682 01ad 0100     		.2byte	0x1
+ 1683 01af 53       		.byte	0x53
+ 1684 01b0 2E000000 		.4byte	.LVL52
+ 1685 01b4 37000000 		.4byte	.LVL53-1
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 35
+
+
+ 1686 01b8 0100     		.2byte	0x1
+ 1687 01ba 53       		.byte	0x53
+ 1688 01bb 00000000 		.4byte	0
+ 1689 01bf 00000000 		.4byte	0
+ 1690              	.LLST9:
+ 1691 01c3 02000000 		.4byte	.LVL54
+ 1692 01c7 06000000 		.4byte	.LVL55
+ 1693 01cb 0200     		.2byte	0x2
+ 1694 01cd 30       		.byte	0x30
+ 1695 01ce 9F       		.byte	0x9f
+ 1696 01cf 06000000 		.4byte	.LVL55
+ 1697 01d3 40000000 		.4byte	.LVL57
+ 1698 01d7 0100     		.2byte	0x1
+ 1699 01d9 54       		.byte	0x54
+ 1700 01da 42000000 		.4byte	.LVL58
+ 1701 01de 46000000 		.4byte	.LVL59
+ 1702 01e2 0100     		.2byte	0x1
+ 1703 01e4 54       		.byte	0x54
+ 1704 01e5 00000000 		.4byte	0
+ 1705 01e9 00000000 		.4byte	0
+ 1706              		.section	.debug_aranges,"",%progbits
+ 1707 0000 54000000 		.4byte	0x54
+ 1708 0004 0200     		.2byte	0x2
+ 1709 0006 00000000 		.4byte	.Ldebug_info0
+ 1710 000a 04       		.byte	0x4
+ 1711 000b 00       		.byte	0
+ 1712 000c 0000     		.2byte	0
+ 1713 000e 0000     		.2byte	0
+ 1714 0010 00000000 		.4byte	.LFB38
+ 1715 0014 02000000 		.4byte	.LFE38-.LFB38
+ 1716 0018 00000000 		.4byte	.LFB33
+ 1717 001c 3C000000 		.4byte	.LFE33-.LFB33
+ 1718 0020 00000000 		.4byte	.LFB34
+ 1719 0024 34000000 		.4byte	.LFE34-.LFB34
+ 1720 0028 00000000 		.4byte	.LFB40
+ 1721 002c 50000000 		.4byte	.LFE40-.LFB40
+ 1722 0030 00000000 		.4byte	.LFB35
+ 1723 0034 58000000 		.4byte	.LFE35-.LFB35
+ 1724 0038 00000000 		.4byte	.LFB36
+ 1725 003c 3C000000 		.4byte	.LFE36-.LFB36
+ 1726 0040 00000000 		.4byte	.LFB37
+ 1727 0044 48000000 		.4byte	.LFE37-.LFB37
+ 1728 0048 00000000 		.4byte	.LFB39
+ 1729 004c 50000000 		.4byte	.LFE39-.LFB39
+ 1730 0050 00000000 		.4byte	0
+ 1731 0054 00000000 		.4byte	0
+ 1732              		.section	.debug_ranges,"",%progbits
+ 1733              	.Ldebug_ranges0:
+ 1734 0000 00000000 		.4byte	.LFB38
+ 1735 0004 02000000 		.4byte	.LFE38
+ 1736 0008 00000000 		.4byte	.LFB33
+ 1737 000c 3C000000 		.4byte	.LFE33
+ 1738 0010 00000000 		.4byte	.LFB34
+ 1739 0014 34000000 		.4byte	.LFE34
+ 1740 0018 00000000 		.4byte	.LFB40
+ 1741 001c 50000000 		.4byte	.LFE40
+ 1742 0020 00000000 		.4byte	.LFB35
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 36
+
+
+ 1743 0024 58000000 		.4byte	.LFE35
+ 1744 0028 00000000 		.4byte	.LFB36
+ 1745 002c 3C000000 		.4byte	.LFE36
+ 1746 0030 00000000 		.4byte	.LFB37
+ 1747 0034 48000000 		.4byte	.LFE37
+ 1748 0038 00000000 		.4byte	.LFB39
+ 1749 003c 50000000 		.4byte	.LFE39
+ 1750 0040 00000000 		.4byte	0
+ 1751 0044 00000000 		.4byte	0
+ 1752              		.section	.debug_line,"",%progbits
+ 1753              	.Ldebug_line0:
+ 1754 0000 B7010000 		.section	.debug_str,"MS",%progbits,1
+ 1754      02008700 
+ 1754      00000201 
+ 1754      FB0E0D00 
+ 1754      01010101 
+ 1755              	.LASF22:
+ 1756 0000 5461736B 		.ascii	"TaskManager\000"
+ 1756      4D616E61 
+ 1756      67657200 
+ 1757              	.LASF33:
+ 1758 000c 53797374 		.ascii	"System_Timer\000"
+ 1758      656D5F54 
+ 1758      696D6572 
+ 1758      00
+ 1759              	.LASF30:
+ 1760 0019 5461736B 		.ascii	"TaskQueue\000"
+ 1760      51756575 
+ 1760      6500
+ 1761              	.LASF26:
+ 1762 0023 54696D65 		.ascii	"TimerService\000"
+ 1762      72536572 
+ 1762      76696365 
+ 1762      00
+ 1763              	.LASF35:
+ 1764 0030 2E5C5461 		.ascii	".\\TaskDispatcher.c\000"
+ 1764      736B4469 
+ 1764      73706174 
+ 1764      63686572 
+ 1764      2E6300
+ 1765              	.LASF31:
+ 1766 0043 4D61696E 		.ascii	"MainTimer\000"
+ 1766      54696D65 
+ 1766      7200
+ 1767              	.LASF24:
+ 1768 004d 6E6F696E 		.ascii	"nointerrupted\000"
+ 1768      74657272 
+ 1768      75707465 
+ 1768      6400
+ 1769              	.LASF3:
+ 1770 005b 73686F72 		.ascii	"short unsigned int\000"
+ 1770      7420756E 
+ 1770      7369676E 
+ 1770      65642069 
+ 1770      6E7400
+ 1771              	.LASF28:
+ 1772 006e 53657454 		.ascii	"SetTimerTask\000"
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 37
+
+
+ 1772      696D6572 
+ 1772      5461736B 
+ 1772      00
+ 1773              	.LASF11:
+ 1774 007b 666C6F61 		.ascii	"float\000"
+ 1774      7400
+ 1775              	.LASF39:
+ 1776 0081 54696D65 		.ascii	"Timer_RTOS_ISR_StartEx\000"
+ 1776      725F5254 
+ 1776      4F535F49 
+ 1776      53525F53 
+ 1776      74617274 
+ 1777              	.LASF36:
+ 1778 0098 433A5C45 		.ascii	"C:\\EAGLE\\My\\WirellesLoad\\WirellesLoad\\Wirelles"
+ 1778      41474C45 
+ 1778      5C4D795C 
+ 1778      57697265 
+ 1778      6C6C6573 
+ 1779 00c6 4C6F6164 		.ascii	"Load_v1.cydsn\000"
+ 1779      5F76312E 
+ 1779      63796473 
+ 1779      6E00
+ 1780              	.LASF1:
+ 1781 00d4 756E7369 		.ascii	"unsigned char\000"
+ 1781      676E6564 
+ 1781      20636861 
+ 1781      7200
+ 1782              	.LASF5:
+ 1783 00e2 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1783      20756E73 
+ 1783      69676E65 
+ 1783      6420696E 
+ 1783      7400
+ 1784              	.LASF9:
+ 1785 00f4 75696E74 		.ascii	"uint8\000"
+ 1785      3800
+ 1786              	.LASF37:
+ 1787 00fa 49646C65 		.ascii	"Idle\000"
+ 1787      00
+ 1788              	.LASF19:
+ 1789 00ff 54505452 		.ascii	"TPTR\000"
+ 1789      00
+ 1790              	.LASF12:
+ 1791 0104 646F7562 		.ascii	"double\000"
+ 1791      6C6500
+ 1792              	.LASF32:
+ 1793 010b 53797374 		.ascii	"System_Timer_Flag\000"
+ 1793      656D5F54 
+ 1793      696D6572 
+ 1793      5F466C61 
+ 1793      6700
+ 1794              	.LASF20:
+ 1795 011d 476F546F 		.ascii	"GoToTask\000"
+ 1795      5461736B 
+ 1795      00
+ 1796              	.LASF29:
+ 1797 0126 4E657754 		.ascii	"NewTime\000"
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 38
+
+
+ 1797      696D6500 
+ 1798              	.LASF10:
+ 1799 012e 75696E74 		.ascii	"uint32\000"
+ 1799      333200
+ 1800              	.LASF8:
+ 1801 0135 756E7369 		.ascii	"unsigned int\000"
+ 1801      676E6564 
+ 1801      20696E74 
+ 1801      00
+ 1802              	.LASF16:
+ 1803 0142 4E756D62 		.ascii	"Number\000"
+ 1803      657200
+ 1804              	.LASF7:
+ 1805 0149 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1805      206C6F6E 
+ 1805      6720756E 
+ 1805      7369676E 
+ 1805      65642069 
+ 1806              	.LASF14:
+ 1807 0160 63796973 		.ascii	"cyisraddress\000"
+ 1807      72616464 
+ 1807      72657373 
+ 1807      00
+ 1808              	.LASF15:
+ 1809 016d 73697A65 		.ascii	"sizetype\000"
+ 1809      74797065 
+ 1809      00
+ 1810              	.LASF23:
+ 1811 0176 53657454 		.ascii	"SetTask\000"
+ 1811      61736B00 
+ 1812              	.LASF38:
+ 1813 017e 52544F53 		.ascii	"RTOS_Start\000"
+ 1813      5F537461 
+ 1813      727400
+ 1814              	.LASF6:
+ 1815 0189 6C6F6E67 		.ascii	"long long int\000"
+ 1815      206C6F6E 
+ 1815      6720696E 
+ 1815      7400
+ 1816              	.LASF18:
+ 1817 0197 466C6167 		.ascii	"Flag\000"
+ 1817      00
+ 1818              	.LASF25:
+ 1819 019c 496E6974 		.ascii	"InitRTOS\000"
+ 1819      52544F53 
+ 1819      00
+ 1820              	.LASF21:
+ 1821 01a5 696E6465 		.ascii	"index\000"
+ 1821      7800
+ 1822              	.LASF34:
+ 1823 01ab 474E5520 		.ascii	"GNU C 4.9.3 20150303 (release) [ARM/embedded-4_9-br"
+ 1823      4320342E 
+ 1823      392E3320 
+ 1823      32303135 
+ 1823      30333033 
+ 1824 01de 616E6368 		.ascii	"anch revision 221220] -mcpu=cortex-m0 -mthumb -g -O"
+ 1824      20726576 
+ARM GAS  C:\DOCUME~1\Remixvit\LOCALS~1\Temp\ccbu8fZR.s 			page 39
+
+
+ 1824      6973696F 
+ 1824      6E203232 
+ 1824      31323230 
+ 1825 0211 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 1825      66756E63 
+ 1825      74696F6E 
+ 1825      2D736563 
+ 1825      74696F6E 
+ 1826              	.LASF2:
+ 1827 0239 73686F72 		.ascii	"short int\000"
+ 1827      7420696E 
+ 1827      7400
+ 1828              	.LASF4:
+ 1829 0243 6C6F6E67 		.ascii	"long int\000"
+ 1829      20696E74 
+ 1829      00
+ 1830              	.LASF13:
+ 1831 024c 63686172 		.ascii	"char\000"
+ 1831      00
+ 1832              	.LASF0:
+ 1833 0251 7369676E 		.ascii	"signed char\000"
+ 1833      65642063 
+ 1833      68617200 
+ 1834              	.LASF17:
+ 1835 025d 54696D65 		.ascii	"Time\000"
+ 1835      00
+ 1836              	.LASF27:
+ 1837 0262 5461736B 		.ascii	"TaskDispatcher_ISR\000"
+ 1837      44697370 
+ 1837      61746368 
+ 1837      65725F49 
+ 1837      535200
+ 1838              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.9.3 20150303 (release) [ARM/embedded-4_9-br

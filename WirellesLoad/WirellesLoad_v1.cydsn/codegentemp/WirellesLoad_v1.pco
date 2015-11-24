@@ -1,5 +1,5 @@
 # WirellesLoad_v1
-# 2015-11-24 06:50:25Z
+# 2015-11-24 07:31:56Z
 
 # IO_2@[IOP=(3)][IoId=(2)] is reserved: SWDDebugEnabled
 dont_use_io iocell 3 2
@@ -7,11 +7,11 @@ dont_use_io iocell 3 2
 dont_use_io iocell 3 3
 set_location "ClockGenBlock" m0s8clockgenblockcell -1 -1 0
 set_location "ClockBlock" m0s8clockblockcell -1 -1 0
-set_io "\SCB1:sda(0)\" iocell 3 1
-set_io "\SCB1:scl(0)\" iocell 3 0
-set_io "\SCB2:sclk_m(0)\" iocell 4 2
-set_io "\SCB2:miso_m(0)\" iocell 4 1
-set_io "\SCB2:mosi_m(0)\" iocell 4 0
+set_io "\I2C:sda(0)\" iocell 3 1
+set_io "\I2C:scl(0)\" iocell 3 0
+set_io "\SPI:sclk_m(0)\" iocell 4 2
+set_io "\SPI:miso_m(0)\" iocell 4 1
+set_io "\SPI:mosi_m(0)\" iocell 4 0
 set_io "NRF_IRQ(0)" iocell 0 5
 set_io "NRF_SS(0)" iocell 0 3
 set_io "NRF_CSN(0)" iocell 0 4
@@ -22,7 +22,9 @@ set_io "Led(0)" iocell 2 3
 set_io "Load(0)" iocell 3 6
 set_io "Button(0)" iocell 3 5
 set_location "Net_44" 0 1 0 0
-set_location "\SCB1:SCB_IRQ\" interrupt -1 -1 11
-set_location "\SCB1:SCB\" m0s8scbcell -1 -1 1
-set_location "\SCB2:SCB\" m0s8scbcell -1 -1 0
+set_location "\I2C:SCB_IRQ\" interrupt -1 -1 11
+set_location "\I2C:SCB\" m0s8scbcell -1 -1 1
+set_location "\SPI:SCB\" m0s8scbcell -1 -1 0
 set_location "External_ISR" interrupt -1 -1 0
+set_location "\Timer:cy_m0s8_tcpwm_1\" m0s8tcpwmcell -1 -1 0
+set_location "Timer_RTOS_ISR" interrupt -1 -1 2
