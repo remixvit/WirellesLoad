@@ -120,9 +120,35 @@
           <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\SCB2_mosi_m.c</File>
           <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\SCB2_mosi_m.h</File>
           <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\SCB2_mosi_m_aliases.h</File>
-          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\SCB2_ss0_m.c</File>
-          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\SCB2_ss0_m.h</File>
-          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\SCB2_ss0_m_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_IRQ.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_IRQ.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_IRQ_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_SS.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_SS.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_SS_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_CSN.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_CSN.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\NRF_CSN_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\OPT_IRQ.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\OPT_IRQ.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\OPT_IRQ_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\TEMP_IRQ.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\TEMP_IRQ.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\TEMP_IRQ_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\CRIT_TEMP_IRQ.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\CRIT_TEMP_IRQ.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\CRIT_TEMP_IRQ_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Led.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Led.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Led_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Load.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Load.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Load_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Button.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Button.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\Button_aliases.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\External_ISR.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC4\External_ISR.h</File>
         </Files>
       </Folder>
       <Folder BuildType="STRICT" Path="C:\EAGLE\My\WirellesLoad\WirellesLoad\WirellesLoad_v1.cydsn\Export\ARM_GCC_Generic">

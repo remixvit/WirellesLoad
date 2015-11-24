@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: SCB2_ss0_m.h  
+* File Name: TEMP_IRQ.h  
 * Version 2.10
 *
 * Description:
@@ -15,8 +15,8 @@
 * the software package with which this file was provided.
 *******************************************************************************/
 
-#if !defined(CY_PINS_SCB2_ss0_m_ALIASES_H) /* Pins SCB2_ss0_m_ALIASES_H */
-#define CY_PINS_SCB2_ss0_m_ALIASES_H
+#if !defined(CY_PINS_TEMP_IRQ_ALIASES_H) /* Pins TEMP_IRQ_ALIASES_H */
+#define CY_PINS_TEMP_IRQ_ALIASES_H
 
 #include "cytypes.h"
 #include "cyfitter.h"
@@ -26,14 +26,14 @@
 /***************************************
 *              Constants        
 ***************************************/
-#define SCB2_ss0_m_0		(SCB2_ss0_m__0__PC)
-#define SCB2_ss0_m_0_PS		(SCB2_ss0_m__0__PS)
-#define SCB2_ss0_m_0_PC		(SCB2_ss0_m__0__PC)
-#define SCB2_ss0_m_0_DR		(SCB2_ss0_m__0__DR)
-#define SCB2_ss0_m_0_SHIFT	(SCB2_ss0_m__0__SHIFT)
+#define TEMP_IRQ_0		(TEMP_IRQ__0__PC)
+#define TEMP_IRQ_0_PS		(TEMP_IRQ__0__PS)
+#define TEMP_IRQ_0_PC		(TEMP_IRQ__0__PC)
+#define TEMP_IRQ_0_DR		(TEMP_IRQ__0__DR)
+#define TEMP_IRQ_0_SHIFT	(TEMP_IRQ__0__SHIFT)
 
 
-#endif /* End Pins SCB2_ss0_m_ALIASES_H */
+#endif /* End Pins TEMP_IRQ_ALIASES_H */
 
 
 /* [] END OF FILE */

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: SCB2_ss0_m.c  
+* File Name: OPT_IRQ.c  
 * Version 2.10
 *
 * Description:
@@ -15,18 +15,18 @@
 *******************************************************************************/
 
 #include "cytypes.h"
-#include "SCB2_ss0_m.h"
+#include "OPT_IRQ.h"
 
 #define SetP4PinDriveMode(shift, mode)  \
     do { \
-        SCB2_ss0_m_PC =   (SCB2_ss0_m_PC & \
-                                (uint32)(~(uint32)(SCB2_ss0_m_DRIVE_MODE_IND_MASK << (SCB2_ss0_m_DRIVE_MODE_BITS * (shift))))) | \
-                                (uint32)((uint32)(mode) << (SCB2_ss0_m_DRIVE_MODE_BITS * (shift))); \
+        OPT_IRQ_PC =   (OPT_IRQ_PC & \
+                                (uint32)(~(uint32)(OPT_IRQ_DRIVE_MODE_IND_MASK << (OPT_IRQ_DRIVE_MODE_BITS * (shift))))) | \
+                                (uint32)((uint32)(mode) << (OPT_IRQ_DRIVE_MODE_BITS * (shift))); \
     } while (0)
 
 
 /*******************************************************************************
-* Function Name: SCB2_ss0_m_Write
+* Function Name: OPT_IRQ_Write
 ********************************************************************************
 *
 * Summary:
@@ -39,16 +39,16 @@
 *  None 
 *  
 *******************************************************************************/
-void SCB2_ss0_m_Write(uint8 value) 
+void OPT_IRQ_Write(uint8 value) 
 {
-    uint8 drVal = (uint8)(SCB2_ss0_m_DR & (uint8)(~SCB2_ss0_m_MASK));
-    drVal = (drVal | ((uint8)(value << SCB2_ss0_m_SHIFT) & SCB2_ss0_m_MASK));
-    SCB2_ss0_m_DR = (uint32)drVal;
+    uint8 drVal = (uint8)(OPT_IRQ_DR & (uint8)(~OPT_IRQ_MASK));
+    drVal = (drVal | ((uint8)(value << OPT_IRQ_SHIFT) & OPT_IRQ_MASK));
+    OPT_IRQ_DR = (uint32)drVal;
 }
 
 
 /*******************************************************************************
-* Function Name: SCB2_ss0_m_SetDriveMode
+* Function Name: OPT_IRQ_SetDriveMode
 ********************************************************************************
 *
 * Summary:
@@ -57,27 +57,27 @@ void SCB2_ss0_m_Write(uint8 value)
 * Parameters:  
 *  mode:  Change the pins to one of the following drive modes.
 *
-*  SCB2_ss0_m_DM_STRONG     Strong Drive 
-*  SCB2_ss0_m_DM_OD_HI      Open Drain, Drives High 
-*  SCB2_ss0_m_DM_OD_LO      Open Drain, Drives Low 
-*  SCB2_ss0_m_DM_RES_UP     Resistive Pull Up 
-*  SCB2_ss0_m_DM_RES_DWN    Resistive Pull Down 
-*  SCB2_ss0_m_DM_RES_UPDWN  Resistive Pull Up/Down 
-*  SCB2_ss0_m_DM_DIG_HIZ    High Impedance Digital 
-*  SCB2_ss0_m_DM_ALG_HIZ    High Impedance Analog 
+*  OPT_IRQ_DM_STRONG     Strong Drive 
+*  OPT_IRQ_DM_OD_HI      Open Drain, Drives High 
+*  OPT_IRQ_DM_OD_LO      Open Drain, Drives Low 
+*  OPT_IRQ_DM_RES_UP     Resistive Pull Up 
+*  OPT_IRQ_DM_RES_DWN    Resistive Pull Down 
+*  OPT_IRQ_DM_RES_UPDWN  Resistive Pull Up/Down 
+*  OPT_IRQ_DM_DIG_HIZ    High Impedance Digital 
+*  OPT_IRQ_DM_ALG_HIZ    High Impedance Analog 
 *
 * Return: 
 *  None
 *
 *******************************************************************************/
-void SCB2_ss0_m_SetDriveMode(uint8 mode) 
+void OPT_IRQ_SetDriveMode(uint8 mode) 
 {
-	SetP4PinDriveMode(SCB2_ss0_m__0__SHIFT, mode);
+	SetP4PinDriveMode(OPT_IRQ__0__SHIFT, mode);
 }
 
 
 /*******************************************************************************
-* Function Name: SCB2_ss0_m_Read
+* Function Name: OPT_IRQ_Read
 ********************************************************************************
 *
 * Summary:
@@ -91,17 +91,17 @@ void SCB2_ss0_m_SetDriveMode(uint8 mode)
 *  Returns the current value of the Digital Port as a right justified number
 *  
 * Note:
-*  Macro SCB2_ss0_m_ReadPS calls this function. 
+*  Macro OPT_IRQ_ReadPS calls this function. 
 *  
 *******************************************************************************/
-uint8 SCB2_ss0_m_Read(void) 
+uint8 OPT_IRQ_Read(void) 
 {
-    return (uint8)((SCB2_ss0_m_PS & SCB2_ss0_m_MASK) >> SCB2_ss0_m_SHIFT);
+    return (uint8)((OPT_IRQ_PS & OPT_IRQ_MASK) >> OPT_IRQ_SHIFT);
 }
 
 
 /*******************************************************************************
-* Function Name: SCB2_ss0_m_ReadDataReg
+* Function Name: OPT_IRQ_ReadDataReg
 ********************************************************************************
 *
 * Summary:
@@ -114,17 +114,17 @@ uint8 SCB2_ss0_m_Read(void)
 *  Returns the current value assigned to the Digital Port's data output register
 *  
 *******************************************************************************/
-uint8 SCB2_ss0_m_ReadDataReg(void) 
+uint8 OPT_IRQ_ReadDataReg(void) 
 {
-    return (uint8)((SCB2_ss0_m_DR & SCB2_ss0_m_MASK) >> SCB2_ss0_m_SHIFT);
+    return (uint8)((OPT_IRQ_DR & OPT_IRQ_MASK) >> OPT_IRQ_SHIFT);
 }
 
 
 /* If Interrupts Are Enabled for this Pins component */ 
-#if defined(SCB2_ss0_m_INTSTAT) 
+#if defined(OPT_IRQ_INTSTAT) 
 
     /*******************************************************************************
-    * Function Name: SCB2_ss0_m_ClearInterrupt
+    * Function Name: OPT_IRQ_ClearInterrupt
     ********************************************************************************
     *
     * Summary:
@@ -138,11 +138,11 @@ uint8 SCB2_ss0_m_ReadDataReg(void)
     *  Returns the value of the interrupt status register
     *  
     *******************************************************************************/
-    uint8 SCB2_ss0_m_ClearInterrupt(void) 
+    uint8 OPT_IRQ_ClearInterrupt(void) 
     {
-		uint8 maskedStatus = (uint8)(SCB2_ss0_m_INTSTAT & SCB2_ss0_m_MASK);
-		SCB2_ss0_m_INTSTAT = maskedStatus;
-        return maskedStatus >> SCB2_ss0_m_SHIFT;
+		uint8 maskedStatus = (uint8)(OPT_IRQ_INTSTAT & OPT_IRQ_MASK);
+		OPT_IRQ_INTSTAT = maskedStatus;
+        return maskedStatus >> OPT_IRQ_SHIFT;
     }
 
 #endif /* If Interrupts Are Enabled for this Pins component */ 

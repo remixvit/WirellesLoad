@@ -36,7 +36,7 @@
 #define SCB2_SPI_WAKE_ENABLE            (0u)
 #define SCB2_SPI_BITS_ORDER             (1u)
 #define SCB2_SPI_TRANSFER_SEPARATION    (1u)
-#define SCB2_SPI_NUMBER_OF_SS_LINES     (1u)
+#define SCB2_SPI_NUMBER_OF_SS_LINES     (0u)
 #define SCB2_SPI_RX_BUFFER_SIZE         (8u)
 #define SCB2_SPI_TX_BUFFER_SIZE         (8u)
 
