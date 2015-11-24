@@ -155,8 +155,18 @@ static void ClockSetup(void)
 	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_ILO_CONFIG), 0x80000006u);
 
 
+	/* CYDEV_CLK_SELECT00 Starting address: CYDEV_CLK_SELECT00 */
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_SELECT02), 0x00000010u);
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_SELECT03), 0x00000020u);
+
 	/* CYDEV_CLK_IMO_CONFIG Starting address: CYDEV_CLK_IMO_CONFIG */
 	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_IMO_CONFIG), 0x80000000u);
+
+	/* CYDEV_CLK_DIVIDER_A00 Starting address: CYDEV_CLK_DIVIDER_A00 */
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_DIVIDER_A00), 0x80000001u);
+
+	/* CYDEV_CLK_DIVIDER_B00 Starting address: CYDEV_CLK_DIVIDER_B00 */
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_CLK_DIVIDER_B00), 0x8000000Eu);
 
 	(void)CyIntSetVector(9u, &CySysWdtIsr);
 	CyIntEnable(9u);
@@ -235,7 +245,12 @@ void cyfitter_cfg(void)
 		}
 
 		/* HSIOM Starting address: CYDEV_HSIOM_BASE */
-		CY_SET_XTND_REG32((void CYFAR *)(CYREG_HSIOM_PORT_SEL3), 0x0000EE00u);
+		CY_SET_XTND_REG32((void CYFAR *)(CYDEV_HSIOM_BASE), 0x00000F00u);
+		CY_SET_XTND_REG32((void CYFAR *)(CYREG_HSIOM_PORT_SEL3), 0x0000EEEEu);
+		CY_SET_XTND_REG32((void CYFAR *)(CYREG_HSIOM_PORT_SEL4), 0x00000FFFu);
+
+		/* UDB_PA_0 Starting address: CYDEV_UDB_PA0_BASE */
+		CY_SET_XTND_REG32((void CYFAR *)(CYDEV_UDB_PA0_BASE), 0x00990000u);
 
 		/* UDB_PA_3 Starting address: CYDEV_UDB_PA3_BASE */
 		CY_SET_XTND_REG32((void CYFAR *)(CYDEV_UDB_PA3_BASE), 0x00990000u);
@@ -249,8 +264,19 @@ void cyfitter_cfg(void)
 	}
 
 	/* Perform second pass device configuration. These items must be configured in specific order after the regular configuration is done. */
+	/* IOPINS0_0 Starting address: CYDEV_PRT0_BASE */
+	CY_SET_XTND_REG32((void CYFAR *)(CYDEV_PRT0_BASE), 0x00000004u);
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_PRT0_PC), 0x00000180u);
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_PRT0_PC2), 0x00000004u);
+
 	/* IOPINS0_3 Starting address: CYDEV_PRT3_BASE */
-	CY_SET_XTND_REG32((void CYFAR *)(CYREG_PRT3_PC), 0x00000D80u);
+	CY_SET_XTND_REG32((void CYFAR *)(CYDEV_PRT3_BASE), 0x00000003u);
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_PRT3_PC), 0x00000DA4u);
+
+	/* IOPINS0_4 Starting address: CYDEV_PRT4_BASE */
+	CY_SET_XTND_REG32((void CYFAR *)(CYDEV_PRT4_BASE), 0x00000005u);
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_PRT4_PC), 0x0000018Eu);
+	CY_SET_XTND_REG32((void CYFAR *)(CYREG_PRT4_PC2), 0x00000005u);
 
 	/* Setup clocks based on selections from Clock DWR */
 	ClockSetup();
